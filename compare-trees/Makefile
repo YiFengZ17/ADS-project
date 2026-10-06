@@ -1,6 +1,7 @@
 CC = gcc
+PYTHON ?= python3
 CFLAGS = -std=c11 -O2 -Wall -Wextra -Wpedantic
-CODE = commit-version/code
+CODE = code
 SOURCES = $(CODE)/test.c
 INCLUDED = $(CODE)/bst.c $(CODE)/avl.c $(CODE)/splay.c $(CODE)/redblack.c $(CODE)/bplus.c
 BIN = build/compare-trees
@@ -25,9 +26,14 @@ benchmark: $(BIN)
 	./$(BIN) --bench data/results/raw.csv data/inputs
 
 analyze:
-	python3 scripts/analyze.py
+	$(PYTHON) scripts/analyze.py
 
 report draft:
-	python3 scripts/build_report.py --compile
+	$(PYTHON) scripts/build_report.py --compile
 
-.PHONY: all check sanitize benchmark analyze report draft
+.PHONY: all check sanitize benchmark analyze report draft package-code
+
+
+# Only sync source code after verification; PDFs require separate review.
+package-code: check
+	$(PYTHON) scripts/package_code.py

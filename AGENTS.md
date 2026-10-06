@@ -1,3 +1,3 @@
 # ADS agent instructions
 
-Read and follow [AGENT.md](AGENT.md) in this directory for all ADS work.
+所有 ADS 工作先阅读并遵守 [AGENT.md](AGENT.md)。路径以仓库根目录为基准。

@@ -7,8 +7,8 @@ complete source code, and instructions for reproducing the checks and timings.
 ## Submission layout
 
 ```text
-commit-version/
-├── yds_2026G##_P1.pdf  # Experimental report
+TA/
+├── yds_2026G17_P1.pdf  # Experimental report
 ├── README.md                     # Reproduction instructions
 └── code/
     ├── test.c                    # Shared definitions, smoke test and benchmark driver
@@ -19,8 +19,7 @@ commit-version/
     └── bplus.c                   # B+ tree with capacity 32
 ```
 
-The submitted report is `yds_2026G##_P1.pdf`. The additional
-`compare-search-trees-draft.pdf` is an identical working copy and need not be submitted.
+The submitted report is `yds_2026G17_P1.pdf`.
 
 ## Requirements
 
@@ -33,7 +32,7 @@ on the GCC distribution and its runtime.
 The optional sanitizer check requires AddressSanitizer and UndefinedBehaviorSanitizer
 support. Python and LaTeX are not needed to run the submitted code.
 
-Run all commands below from `commit-version/`.
+Run all commands below from `TA/`.
 
 ## Build and smoke test
 

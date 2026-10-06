@@ -1,60 +1,58 @@
-# Compare Search Trees — Working Project
+# Compare Search Trees
 
-The ready-to-submit package is `commit-version/`. Its README documents the actual
-submitted files and standalone GCC commands for reproducing checks and timings.
+作者维护 `code/` 和 `report/report.md`；另一位成员复现并在 `opinion/` 留意见。两人都可以直接提交 main，开始前先拉取更新。
 
-## Layout
+## 目录
 
-```text
-compare-trees/
-├── commit-version/
-│   ├── compare-search-trees-draft.pdf
-│   ├── README.md
-│   └── code/                       # test.c and the five tree implementations
-├── report/report.md                # Authoritative editable report content
-├── figures/                        # Three figures referenced by Markdown
-├── scripts/build_report.py         # Markdown → LaTeX → PDF; never writes Markdown
-├── scripts/analyze.py              # Local evidence validation and figure generation
-├── Makefile
-├── data/                           # Local generated timing evidence and input files
-└── build/                          # Local binaries, PDFs and intermediate LaTeX
-```
+- `code/`：五种树实现和 `test.c`，唯一开发源码；`code/examples/testavl.c` 保留原根目录的独立 AVL 练习，不参与实验构建或打包。
+- `report/report.md`：唯一报告正文；`report/legacy-latex/`：旧 LaTeX 归档，不参与构建。
+- `figures/`：当前报告的三张图，保留在 Git 中。
+- `TA/`：实名提交快照，报告 `yds_2026G17_P1.pdf`。
+- `Peer Review/`：匿名提交快照，报告 `compare-search-trees.pdf`。
+- `opinion/`：复现记录和意见。
+- `scripts/`：Markdown 构建、数据汇总和提交代码同步工具。
+- `build/`、`data/`、`qa/`、`scratch/`：本地输出，不上传。
 
-Old `main.tex` and `report/sections/` files are legacy sources and are not used by
-`make report` or `make draft`. Do not edit them to change the report.
+## 编译和复现
 
-## Program reproduction
-
-From this working directory, use `make`, `make check`, and `make sanitize`.
-Use `make benchmark` to generate fresh local timing data and inputs; this can take
-several minutes because sorted BST updates are quadratic. `make analyze` validates
-those measurements and regenerates figures without changing report text.
-For commands usable with only the submission, see `commit-version/README.md`.
-
-## Markdown → PDF workflow
-
-Requirements: Python 3 with `markdown-it-py`, XeLaTeX with `ctex` and standard LaTeX
-packages, TeX Gyre Termes and Latin Modern fonts, and Poppler's `pdftotext`.
-`matplotlib` is required only for regenerating figures from fresh benchmarks.
+以下命令在本实验目录执行，支持 Linux / WSL。代码需要 GCC、make 和 POSIX 接口。
 
 ```bash
-cd /home/yifeng/projects/ADS/compare-trees
-# Edit report/report.md, then:
-make report
+make                 # build/compare-trees；只编译 code/test.c
+make check           # 五种树的 smoke test
+make sanitize        # ASan + UBSan；build/compare-trees-sanitize
+make benchmark       # data/results/raw.csv 和 data/inputs/；完整运行可能需几分钟
+make analyze         # 校验 315 行计时，生成 data/results/summary.csv
 ```
 
-`make draft` is an alias for the same Markdown-based compilation. Neither command
-runs the benchmark or the old report generator. The compiler respects ordinary
-Markdown line breaks as paragraph breaks, typesets mathematical expressions,
-adds a linked table of contents, and uses the typography of `../main.pdf`.
-It runs XeLaTeX three times to resolve contents page numbers and links, checks
-extracted PDF text against every Markdown item, and verifies that Markdown is unchanged.
+`make analyze` 使用 Python 3 标准库，计算各阶段毫秒中位数和范围，不更新报告或历史图片。新计时受设备和负载影响，作者确认后再更新报告数据及配图。历史 raw.csv 不上传，复现者需重新运行 benchmark。
 
-The command overwrites `build/main.pdf`, `build/compare-search-trees.pdf`,
-`build/compare-search-trees-draft.pdf`, and the existing submission PDF at
-`commit-version/compare-search-trees-draft.pdf`. Intermediates and compilation logs
-are stored under `build/md-report/`.
+## 报告构建
 
-PDFs are outputs, never sources for later Markdown edits. Limitations should contain
-the three most important points and never more than four. Do not add historical raw
-timing files to the submission. Follow `../AGENT.md` for the complete ADS report rules.
+需要 Python 3、XeLaTeX（TeX Live 的 ctex、常用宏包、Latin Modern 和 TeX Gyre 字体）。首次准备 Python 依赖：
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+修改 `report/report.md` 后执行：
+
+```bash
+make report PYTHON=.venv/bin/python
+# 已有 markdown-it-py 的环境也可以直接 make report
+```
+
+`make draft` 是同一入口。生成 `build/md-report/report-from-md.tex`，XeLaTeX 编译三次，日志在 `build/md-report/compile.log`，最终报告是 `build/compare-search-trees.pdf`。脚本确认 Markdown 字节未变化；需要人工检查全文、表格、公式、目录和分页。正文普通单次换行转成分段，数学表达式可以用 `$...$`。
+
+构建不会覆盖 TA 或 Peer Review 的现有 PDF。作者检查后再把实名 PDF 保存为 `TA/yds_2026G17_P1.pdf`；匿名报告必须另行去除封面、作者列表、签名等身份信息并检查，再保存到 `Peer Review/compare-search-trees.pdf`。现有提交 PDF 保留为历史快照。
+
+## 更新提交代码
+
+```bash
+make package-code    # 先运行 check，再把 code/*.c 同步到 TA/code 和 Peer Review/code
+```
+
+同步代码后检查两个提交目录的 diff，运行 sanitizer，确认代码与报告一致，再提交。提交包自身的 README 提供独立 GCC 命令，不需要工作目录里的 Markdown 或 Python 工具。
+
+完整工作约定见根目录 `AGENT.md`，排版模板在 `../templates/report/`。

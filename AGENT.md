@@ -1,14 +1,33 @@
 # ADS 实验报告工作规则
 
-适用于 /home/yifeng/projects/ADS 及其下所有实验项目。
+适用于 projects/ADS 及其下所有实验项目。
 
 ## 小组信息
 - 小组成员：YiFeng Zheng, YuJie Sun
 - Group number: 17
+
+## GitHub 协作方式
+- 两位成员都可以直接向 main 分支提交，不强制任务分支或 PR。
+- 每个实验由一人负责代码、测试和报告，另一人从仓库复现、审阅并提出意见；角色可在不同实验间互换。
+- 复现者把环境、命令、结果、问题和建议记录在实验的 opinion/ 中，注明姓名、日期和复现的 commit；作者记录处理结果。
+- 开始工作前 git pull --ff-only；提交前 git status、git diff，按任务做小提交，再 git push。远端更新导致推送失败时先获取并整合，不 force push。
+- 若已经做了本地提交而 push 被拒，先确保工作区干净，再 git pull --rebase，解决冲突后 git rebase --continue、重新验证并 git push；不能直接使用 --ff-only 整合已经分叉的提交历史。
+- 工作区有未提交修改时先提交或 stash，不能 reset --hard、覆盖同伴文件或悄悄丢弃修改；冲突必须结合双方意图处理。
+- 尽量避免同时编辑同一文件，先约定分工。报告正文由作者维护，复现者优先在 opinion/ 留意见。
+
+## 目录约定
+- 根目录只放仓库说明、规则、templates/ 和各实验目录，不放独立实验源码。
+- 每个实验目录含 code/（开发源）、report/（正文）、TA/（实名提交）、Peer Review/（匿名提交）、opinion/（复现和意见）。按需要加 figures/、scripts/、build/、data/。
+- TA/ 和 Peer Review/ 是交付快照；代码修改发生在 code/，验证后用该实验的打包命令同步，不分别维护三套代码。
+- 模板集中在 templates/report/；新实验复制模板，不从旧提交 PDF 回填正文。LaTeX 模板是排版参考，实际报告仍以 Markdown 为准。
+- 使用仓库相对路径，不写个人 home 路径。脚本从自身位置定位项目，命令说明标清工作目录。
+- 本地 data/、build/、qa/、scratch/ 和 .claude/ 不提交 Git；报告依赖的 figures/ 和正式提交 PDF 可以提交。
+- 不把本机测试结果写成同伴已复现；不自动修改报告中的历史计时值。学习辅导、概念讲解、课程学习与复习使用 study-assistant Skill。
+
 ## 内容与模板
-- 所有 ADS 实验报告的排版模板统一参照 /home/yifeng/projects/ADS/main.pdf；可读取同目录 main.tex 核对字体、字号、页边距、标题和公式样式。
-- 项目的 Markdown → 从当前 Markdown 生成排版源文件 → 编译 PDF → 检查内容与排版 → report/report.md 是报告文字的唯一权威来源。直接修改用户指定的原文件，保存后读回核对，不用副本代替原文件。
-- 正常流程：用户修改 覆盖原报告及提交目录里的 PDF。
+- 所有 ADS 实验报告的排版模板统一参照 templates/report/main.pdf；可读取同目录 main.tex 核对字体、字号、页边距、标题和公式样式。
+- 每个实验的 report/report.md 是报告文字的唯一权威来源。流程：编辑 Markdown → 生成 LaTeX → 编译 PDF → 检查内容与排版。直接修改指定原文件，保存后读回核对。
+- 日常构建仅更新 build/ 中的报告。核对后显式更新 TA/ 的提交 PDF；Peer Review/ 必须单独检查匿名性，不能直接复制实名报告。
 - 不得从已有 PDF 草稿提取、复制或回填报告文字到 Markdown。仅第一次生成初稿时，用户授权使用的材料可作为内容来源；后续修改一律以 Markdown 为准。
 - 模板 PDF 只用于参考样式，不作为实验报告内容来源。编译或分析命令不得自动重写已有 Markdown，也不得用旧 LaTeX 章节覆盖用户修改。
 - 报告的语言要简明扼要，尽量不使用高级的生疏的单词。
@@ -40,12 +59,11 @@
 
 ## README 与提交
 - README 必须对应实际提交目录和源文件，不写不存在的 src/、metadata.json 或旧编译入口。
-- 清楚列出提交版本文件夹的的实际结构、依赖、编译命令、正确性检查、sanitizer 检查、计时复现命令，以及每个命令的输出位置。
-- 仅编译 test.c：它通过 include 引入五个实现文件，不能把六个 .c 一起编译。
+- 清楚列出提交版本文件夹的实际结构、依赖、编译命令、正确性检查、sanitizer 检查、计时复现命令，以及每个命令的输出位置。
+- compare-trees 仅编译 code/test.c：它通过 include 引入五个实现文件，不能把六个 .c 一起编译。其他实验按自己的构建入口执行。
 - 区分提交包使用者的代码复现流程和作者工作目录的 Markdown→PDF 编译流程。修改报告后同步提交 PDF 与 README。
 - 不把参考模板、旧报告、缓存、构建日志或本地计时数据擅自加入提交包。
 
 ## 验证
 - 编译后核对 PDF 包含当前 Markdown 的全部段落、表格单元格、图注和标题；确认 Markdown 没被编译过程修改。
 - 渲染 PDF 检查字体、公式、换行、目录、页码和分页，再覆盖旧报告；读回或校验输出文件，确认保存到了原路径。
-
