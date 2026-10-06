@@ -1,0 +1,72 @@
+\section{Data Structure / Algorithm Specification}
+
+\subsection{Interface and Representation}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Implemented tree representations.}
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+File & Representation & Structural invariant \\
+\midrule
+bst.c & Key and two child links & Strict binary-search ordering \\
+avl.c & BST node plus cached height & Child heights differ by at most one \\
+splay.c & Key and two child links & Ordering; accessed updates restructure the root \\
+redblack.c & BST node plus a color flag & Black root; equal black heights; no adjacent reds \\
+bplus.c & Arrays, cached minimum, child links, leaf Next & Half-full nonroot nodes; equal leaf depths \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
+Every tree exposes the same four operations. Insert(X,T) and Delete(X,T) return the updated root and callers must assign it; duplicate insertion stores no additional record, and deleting an absent key preserves the set. Find(X,T) returns Boolean membership, and MakeEmpty(T) frees the tree and returns NULL. Find is read-only everywhere; the splay module therefore does not splay on Find, and search performance is outside this comparison.
+
+\subsection{Unbalanced Binary Search Tree}
+
+Insertion follows comparison-selected links to a NULL child, using a pointer to the owning link so the root and lower nodes are updated uniformly. Deletion bypasses a node with at most one child and otherwise copies the inorder successor into it before unlinking the successor. All operations, including destruction, are iterative, so even a 100,000-node chain cannot overflow the recursion stack.
+
+\subsection{AVL Tree}
+
+An empty subtree has height -1. Each recursive update repairs the search path on return, choosing a single or double rotation from the cached child heights and refreshing them after structural changes. Using child heights rather than the inserted key is essential for deletion, including when the heavier child has equal-height children, and deletion may reduce height repeatedly, so every affected ancestor is rebalanced.
+
+\begin{lstlisting}[language={},numbers=none]
+AVL-DELETE(X,T):
+    if T is empty: return empty
+    descend left or right according to comparison
+    on a match with two children:
+        copy the minimum key of T.right
+        recursively delete that successor
+    on a match with at most one child:
+        free T and return its remaining child
+    repair balance and height; return the new root
+\end{lstlisting}
+
+\subsection{Splay Tree}
+
+Top-down splaying uses a temporary header and two partial trees; zig-zig rotations shorten repeated-direction paths, and final assembly attaches smaller keys left of the accessed root and larger keys right. Insertion splays around X and makes the new key the root; deletion splays X and, if present, joins the remaining subtrees by splaying the maximum of the left subtree. Updates restructure the tree instead of maintaining an explicit height constraint, giving an O(log N) amortized bound per operation but O(N) worst-case cost for a single one. \href{https://www.cs.cmu.edu/~sleator/papers/Self-Adjusting.htm}{Source: Sleator and Tarjan, Self-Adjusting Binary Search Trees}.
+
+\subsection{Red-Black Tree}
+
+The implementation is the left-leaning red-black (LLRB) variant, which encodes a 2-3 tree through link colors: a new node is red, rotations restore left-leaning links, color flips split represented 4-nodes, and the root stays black. Deletion reddens an all-black-child root and uses MoveRedLeft or MoveRedRight before descending into a represented 2-node, replacing a two-child match by its successor and repairing the return path. Measured constants are specific to this variant. \href{https://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/RedBlackBST.java.html}{Source: Princeton, RedBlackBST implementation}.
+
+\subsection{B+ Tree}
+
+CAPACITY is 32 and MINIMUM is half of it, and the minimum occupancy is the value that is really constrained. A node that loses an entry falls to 15 entries, its smallest possible sibling holds 16, and 15+16=31 stays within the legal capacity of 32, so a merge never overflows and deletion never has to split. Any minimum above half the capacity would break that, which makes 16 the largest safe value for capacity 32. Capacity is a design parameter, and the minimum occupancy must be chosen consistently with it. At capacity 32, an internal routing search uses at most 5 key comparisons; the lower-bound search in a full 32-record leaf can require 6. A tree containing 100,000 records has exactly four levels, counting the root and leaves: three levels hold at most 32\textasciicircum{}3 = 32,768 records, whereas five levels require at least 2 * 16\textasciicircum{}4 = 131,072. A nonroot node holds 16 to 32 children or leaf records. An internal root holds 2 to 32 children, while a leaf root holds 1 to 32 records; an empty tree is represented by NULL. Records live only in leaves, whose Next links form a sorted chain; internal separator i is the cached minimum of child i+1, so equality routes right, and Refresh recomputes cached minima after every update. Insertion shifts the leaf suffix and propagates splits upward, an overflow of 33 splitting into 16 and 17. Deletion repairs a deficient child on the return path by borrowing from a sibling holding more than 16 entries or merging the deficient node with a minimally occupied sibling; leaf merges repair Next and a one-child root is replaced by its child. \href{https://cs186berkeley.net/notes/note4/}{Source: Berkeley CS 186, B+ Trees}.
+
+\begin{lstlisting}[language={},numbers=none]
+BPLUS-REPAIR(parent,i):
+    if child[i] has at least 16 entries: return
+    if left sibling has more than 16 entries:
+        move its last entry to the front of child[i]
+    else if right sibling has more than 16 entries:
+        move its first entry to the end of child[i]
+    else:
+        concatenate adjacent children and remove one parent link
+        repair the leaf Next link when merging leaves
+    refresh child minima and parent separators
+\end{lstlisting}
+
+\subsection{Correctness Argument}
+
+Insertion and deletion change the represented set by at most one key, and successor replacement and rotations preserve search ordering because the successor is the smallest key in the right subtree and the middle subtree stays between the rotated keys. Each repair restores its representation invariant: AVL heights, red-black black-height and color balance, splay key partitions, and B+ occupancy with separator routing. Induction over the update sequence therefore preserves set semantics and every invariant. The smoke test below exercises that argument on concrete inputs, but passing it is not a proof for all inputs.

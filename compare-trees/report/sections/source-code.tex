@@ -1,0 +1,16 @@
+\section{Source Code Appendix}
+
+The complete implementation is submitted as six C files in src/\allowbreak{}: one per tree, plus src/\allowbreak{}test.c, which includes them and holds the driver, the smoke test, and the benchmark. The excerpts below show the three least obvious repairs, one from each of the trees whose repairs are hardest to follow; the other files also contain insertion, membership, and destruction. Comments explain operation contracts, structural assumptions, and local transformations.
+
+\subsection{AvlBalance}
+
+\lstinputlisting[language=C,firstline=75,lastline=99,caption={avl.c: AvlBalance}]{src/avl.c}
+
+\subsection{MoveRedLeft}
+
+\lstinputlisting[language=C,firstline=126,lastline=140,caption={redblack.c: MoveRedLeft}]{src/redblack.c}
+
+\clearpage
+\subsection{RepairChild}
+
+\lstinputlisting[language=C,basicstyle=\ttfamily\fontsize{8}{9}\selectfont,firstline=167,lastline=237,caption={bplus.c: RepairChild}]{src/bplus.c}

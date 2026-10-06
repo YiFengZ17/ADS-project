@@ -1,0 +1,75 @@
+\section{Analysis and Comments}
+
+\subsection{Time Complexity}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Asymptotic costs for the implemented update operations.}
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+Tree & Single insertion / deletion & Full sequence of N insertions and N deletions \\
+\midrule
+BST & O(h); O(N) worst case & O(N\textasciicircum{}2) worst case; expected O(N log N) for random insertion \\
+AVL & O(log N) worst case & O(N log N) \\
+Splay & O(log N) amortized; O(N) worst case & O(N log N) amortized bound; O(N) for increasing insertion followed by reverse deletion \\
+RedBlack (LLRB) & O(log N) worst case & O(N log N) \\
+BPlus32 & O(log N), with B = 32 fixed & O(N log N) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
+\subsubsection{Why Sorted BST Updates Are Quadratic}
+
+Increasing insertion into the plain BST creates a right chain. The ith insertion traverses i-1 existing nodes, so insertion performs N(N-1)/\allowbreak{}2 node visits and takes Theta(N\textasciicircum{}2) time. Increasing deletion repeatedly removes the root and takes Theta(N) total time. Reverse deletion repeatedly searches the longest remaining chain, giving another Theta(N\textasciicircum{}2) phase. Both ordered scenarios have quadratic total cost, but their deletion phases are very different.
+
+The two ordered scenarios share the same insertion phase, and the measured BST insertion time grows by 98.40 and 99.63 times from N=10,000 to N=100,000 across them; the two values differ only through median noise. The ideal quadratic factor is 100, and allocator placement, cache behavior, and scheduling explain why a finite measurement falls short of it.
+
+\subsubsection{Why Splay Benefits from Ordered Updates}
+
+During increasing insertion the largest key is already at the root, so each insertion costs constant work; the result can be a left chain, showing that low total update cost does not require low height at every instant. Reverse deletion removes the current maximum at the root and exposes its left subtree, taking constant work per deletion. Increasing deletion instead splays and removes the current minimum; the first such deletion must traverse the initial left chain and costs Theta(N), so constant time cannot be claimed for each deletion. The general amortized theorem bounds the whole update sequence by O(N log N); the linear insertion and reverse-deletion bounds follow directly from this implementation. \href{https://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf}{Source: Sleator and Tarjan, Self-Adjusting Binary Search Trees}.
+
+\subsection{Measured Comparison}
+
+At N=100,000, for increasing insertion /\allowbreak{} increasing deletion Splay is fastest (3.402 ms) and BST slowest (10999.209 ms), a 3232.85-fold difference, giving the order Splay, BPlus32, AVL, RedBlack, BST; for increasing insertion /\allowbreak{} reverse deletion Splay is fastest (3.894 ms) and BST slowest (21933.532 ms), a 5633.15-fold difference, giving the order Splay, BPlus32, AVL, RedBlack, BST; for random insertion /\allowbreak{} random deletion BPlus32 is fastest (22.443 ms) and RedBlack slowest (52.854 ms), a 2.35-fold difference, giving the order BPlus32, BST, AVL, Splay, RedBlack. This ordering describes this experiment and does not establish a universal ranking.
+
+The measured ordering follows from how each implementation reacts to the insertion and deletion order:
+
+\begin{enumerate}
+  \item BST: no balance rule at all, so insertion order decides everything. Increasing insertion builds a right chain and both ordered scenarios are quadratic, while random insertion avoids that chain and is much cheaper.
+  \item AVL: cached heights keep the height logarithmic for every input order, and the strict balance rule makes its cost the least sensitive to order.
+  \item Splay: stores no balance information and pays restructuring on random accesses, but adapts to ordered ones, where the key being reached is already at or near the root.
+  \item RedBlack: also logarithmic for any order, using color and black-height rules instead of AVL height differences. The deletion routine here performs one extra membership descent. Rotation counts were not measured, so this experiment does not establish that LLRB rotates less than AVL.
+  \item BPlus32: a different cost profile rather than a different balance rule. Far fewer levels are visited, but each visit costs a binary search, possible array shifts, and a separator refresh at every modified ancestor.
+\end{enumerate}
+
+The comparison therefore measures complete implementations with shared set semantics rather than isolating one balancing primitive.
+
+\subsection{Space Complexity}
+
+All five structures store O(N) total tree memory for fixed B, and they differ in what each node carries and in the auxiliary space of an update:
+
+\begin{enumerate}
+  \item BST: two child pointers per node and no balance metadata; updates and destruction run in O(1) auxiliary space.
+  \item AVL: the BST layout plus a cached height; recursive updates use O(log N) stack space.
+  \item Splay: the BST layout unchanged, with O(1) auxiliary space, since it stores no balance information.
+  \item RedBlack: the BST layout plus an int color flag in this implementation; recursive updates use O(log N) stack space.
+  \item BPlus32: O(N/\allowbreak{}B) nodes, each reserving O(B) key and child slots, and O(log\_\allowbreak{}B N) recursive stack space. Its leaf layout also reserves child-pointer slots, so reducing the node count does not by itself prove lower byte consumption.
+\end{enumerate}
+
+The driver stores two N-key arrays, requiring O(N) input memory, in addition to whatever the tree under test holds. That input memory is separate from update auxiliary memory. The experiment does not measure peak resident memory, so no empirical memory ranking is reported.
+
+\subsection{Limitations and Improvements}
+
+\begin{itemize}
+  \item Statistics: only three runs; interpret small differences with observed ranges and use more repetitions.
+  \item Workloads: only build-then-delete integer tests; add mixed operations and search benchmarks. Random BST results apply to these shuffled sets.
+  \item Instrumentation: comparison and rotation counts were not measured; collect them in a separate instrumented build.
+  \item Parameters and environment: vary B+ capacity and pin CPU affinity to assess parameter effects and reduce timing noise.
+  \item Page I/\allowbreak{}O: this in-memory benchmark does not measure disk access; use a disk-backed B+ tree to evaluate page I/\allowbreak{}O.
+\end{itemize}
+
+\subsection{Conclusion}
+
+Operation order affects tree performance. Sorted insertions turn a plain BST into a chain, giving quadratic total time. AVL and red-black trees maintain logarithmic height through balancing. In this experiment, Splay was fastest for both ordered workloads, while BPlus32 was fastest for the random workload at N = 100,000. These results show that the best choice depends on the workload, within the implementation and measurement limits discussed above.

@@ -1,0 +1,149 @@
+\documentclass[UTF8,fontset=none,a4paper,11pt,twoside]{ctexart}
+
+% ---------- 基础排版 ----------
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2cm,top=2.5cm,bottom=2.5cm}
+\setlength{\headheight}{14pt}
+\raggedbottom
+\setlength{\emergencystretch}{1em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+
+% ---------- 数学、图表与代码 ----------
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs,array,tabularx}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{needspace}
+\usepackage{float}
+\usepackage{etoolbox}
+\pretocmd{\section}{\FloatBarrier}{}{}
+\ctexset{
+  section = {name = {}, number = \arabic{section}, indent = 0pt, format = \raggedright\Large\bfseries},
+  subsection = {indent = 0pt, format = \raggedright\large\bfseries},
+  subsubsection = {indent = 0pt, format = \raggedright\large\bfseries}
+}
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+\usepackage{forest}
+\usepackage{xcolor}
+\usepackage{listings}
+\setCJKmainfont{TeX Gyre Termes}[Script=Latin]
+\setCJKmonofont{TeX Gyre Cursor}[Script=Latin]
+\setmainfont{TeX Gyre Termes}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+\newfontfamily\titlefont{TeX Gyre Termes}
+
+\definecolor{codegreen}{RGB}{0,110,45}
+\definecolor{codeblue}{RGB}{0,70,170}
+\definecolor{codegray}{RGB}{100,100,100}
+
+\lstdefinestyle{ads}{
+  basicstyle=\ttfamily\small,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  frame=tb,
+  tabsize=4,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  commentstyle=\color{codegreen},
+  keywordstyle=\color{codeblue}\bfseries,
+  breaklines=true
+}
+\lstset{style=ads,language=C}
+
+% ---------- Theorem环境 ----------
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+% ---------- 链接（尽量最后加载） ----------
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyhead[R]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}%
+}
+
+% ---------- 只需修改这里 ----------
+\input{report/metadata}
+
+\renewcommand{\figurename}{Figure}
+\renewcommand{\tablename}{Table}
+\renewcommand{\lstlistingname}{Listing}
+\renewcommand{\abstractname}{Abstract}
+\renewcommand{\contentsname}{Contents}
+\renewcommand{\refname}{Reference}
+\renewenvironment{abstract}{%
+  \begin{center}
+    {\bfseries\fontsize{14pt}{17pt}\selectfont Abstract\par}
+  \end{center}
+  \begin{quotation}\normalsize
+}{%
+  \end{quotation}
+}
+
+\makeatletter
+\renewcommand*{\l@subsubsection}[2]{%
+  \@dottedtocline{3}{3.8em}{3.2em}{#1}{#2}%
+}
+\makeatother
+\begin{document}
+
+\begin{center}
+  \vspace*{0.3cm}
+  {\titlefont\bfseries\fontsize{20pt}{25pt}\selectfont
+    \ProjectTitle\par}
+
+  \vspace{1.2cm}
+  {\titlefont\bfseries\fontsize{13pt}{17pt}\selectfont
+    \StudentNames\par}
+
+  \vspace{0.25cm}
+  {\titlefont\fontsize{11pt}{14pt}\selectfont
+    \GroupNumber\par}
+
+  \vspace{0.9cm}
+  {\titlefont\bfseries\fontsize{12pt}{15pt}\selectfont
+    Date: \ProjectDate\par}
+\end{center}
+
+\vspace{0.8cm}
+
+\begin{center}
+\textit{\ReportStatus}
+\end{center}
+\begin{abstract}
+\input{report/abstract}
+\end{abstract}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+\input{report/sections/introduction}
+\input{report/sections/specification}
+\input{report/sections/testing}
+\input{report/sections/analysis}
+\input{report/sections/contributions}
+
+\clearpage
+\appendix
+\ctexset{section = {number = \Alph{section}}}
+\linespread{1}\selectfont\lstset{basicstyle=\ttfamily\fontsize{8}{10}\selectfont,aboveskip=0.4em,belowskip=0.4em}
+\input{report/sections/source-code}
+\end{document}

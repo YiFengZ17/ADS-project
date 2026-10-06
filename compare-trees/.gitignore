@@ -1,0 +1,19 @@
+# Build output: binaries, LaTeX intermediates, and generated PDFs.
+build/
+
+# QA screenshots and captured logs.
+qa/
+
+# LaTeX intermediates, in case a stray run writes them next to main.tex.
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+
+# Binaries, if ever built in place.
+compare-trees
+compare-trees-sanitize
