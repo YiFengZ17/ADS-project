@@ -1,0 +1,5 @@
+# Project 2 reproduction
+
+Compile `code/main.cpp` with `c++ -std=c++17 -O2 -Wall -Wextra -Wpedantic code/main.cpp -o benchmark`. Run `./benchmark --self-test` for correctness checks. To check memory and undefined behavior, compile with `-g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer` and run `--self-test` again.
+
+Download the distance-weighted 9th DIMACS road graphs from these links: [NY](https://www.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.NY.gr.gz), [BAY](https://www.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.BAY.gr.gz), [COL](https://www.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.COL.gr.gz). Decompress each `.gr.gz` file. Run `./benchmark graph.gr 1000 20261016 > results.csv` once per graph; the program times both methods on the same pairs and checks every distance. The CSV includes pairs, distances, and seconds per query. The report PDF contains the aggregated table and plot. No road graph or raw timing CSV is included in this package.

@@ -16,7 +16,8 @@ YiFeng Zheng、YuJie Sun，Group 17。这里放 ADS 各次实验的代码、报�
 ADS/
 ├── AGENTS.md / AGENT.md    # AI 入口与项目工作约定
 ├── templates/report/      # 打包好的课程报告排版模板
-└── compare-trees/          # 第一次实验；以后每次实验另建一个文件夹
+├── compare-trees/          # 第一次实验
+└── shortest-path-heaps/    # 第二次实验：Dijkstra + 二叉堆 / Fibonacci 堆
     ├── code/              # 日常开发代码
     ├── report/report.md    # 报告正文
     ├── figures/           # 报告使用的图
@@ -28,6 +29,6 @@ ADS/
     └── build/、data/       # 本地生成，不上传 Git
 ```
 
-新实验沿用上面的子目录。模板用法见 `templates/report/README.md`；现有实验的依赖、运行和报告生成方法见 `compare-trees/README.md`。
+新实验沿用上面的子目录。模板用法见 `templates/report/README.md`；现有实验的依赖、运行和报告生成方法见 `compare-trees/README.md` 与 `shortest-path-heaps/README.md`。
 
 本地输入、计时数据、构建缓存和 Claude 配置不上传。正式提交 PDF 和报告图保留在仓库，方便互相审阅。
