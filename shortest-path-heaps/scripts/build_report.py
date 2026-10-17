@@ -68,7 +68,7 @@ def convert(markdown):
                 body.append(r'\begin{center}\textbf{')
             else:
                 if before_body:
-                    body.append(r'\clearpage\tableofcontents\clearpage')
+                    body.append(r'\clearpage\begingroup\small\setlength{\parskip}{0pt}\tableofcontents\endgroup\clearpage')
                     before_body = False
                 level = int(t.tag[1:])
                 command = {1: 'section', 2: 'subsection', 3: 'subsubsection'}.get(level, 'paragraph')
@@ -150,7 +150,10 @@ def main():
     if args.anonymous:
         markdown = markdown.replace('Author: YiFeng Zheng\nYuJie Sun', 'Author: Withheld for peer review')
         markdown = markdown.replace('Group number: 17', 'Group number: Withheld')
-        markdown = markdown.replace('YiFeng Zheng and YuJie Sun, Group 17.', 'Author information withheld for peer review.')
+        author_start = markdown.index('# Author List\n')
+        appendix_start = markdown.index('# Source Code Appendix\n', author_start)
+        markdown = (markdown[:author_start] + '# Author List\n\nWithheld for peer review.\n\n'
+                    + markdown[appendix_start:])
         if 'YiFeng Zheng' in markdown or 'YuJie Sun' in markdown or 'Group 17' in markdown:
             raise ValueError('Author name remains in anonymous report')
     tex.write_text(style + '\n' + r'\begin{document}' + '\n' + convert(markdown) + '\n' + r'\end{document}' + '\n')

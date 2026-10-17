@@ -7,6 +7,7 @@
 #include <numeric>
 #include <queue>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -19,19 +20,33 @@ struct Graph { vector<vector<Edge>> adj; int64_t arcs=0; };
 // Read the directed, nonnegative DIMACS shortest-path graph.
 Graph read_graph(const string& path) {
     ifstream in(path); if (!in) throw runtime_error("cannot open graph: " + path);
-    Graph g; string tag;
-    while (in >> tag) {
-        if (tag == "c") { string line; getline(in,line); }
-        else if (tag == "p") { string kind; int n; int64_t m; in >> kind >> n >> m;
-            if (kind != "sp" || n <= 0) throw runtime_error("invalid DIMACS header");
-            g.adj.resize(n); g.arcs=m;
-        } else if (tag == "a") { int u,v,w; in >> u >> v >> w;
-            if (u<1 || v<1 || u>(int)g.adj.size() || v>(int)g.adj.size() || w<0)
-                throw runtime_error("invalid arc");
-            g.adj[u-1].push_back({v-1,w});
+    Graph g; string line; bool has_header=false; int64_t count=0;
+    while (getline(in,line)) {
+        istringstream record(line); string tag;
+        if (!(record >> tag)) continue;
+        if (tag == "c") continue;
+        string extra;
+        if (tag == "p") {
+            // A second header would discard or reinterpret previously read arcs.
+            if (has_header) throw runtime_error("duplicate DIMACS header");
+            string kind; int n; int64_t m;
+            if (!(record >> kind >> n >> m) || (record >> extra) || kind != "sp" || n <= 0 || m < 0)
+                throw runtime_error("invalid DIMACS header");
+            g.adj.resize(n); g.arcs=m; has_header=true;
+        } else if (tag == "a") {
+            // Parse each line independently so a missing field cannot consume the next record.
+            if (!has_header) throw runtime_error("arc before DIMACS header");
+            int64_t u,v,w;
+            if (!(record >> u >> v >> w) || (record >> extra))
+                throw runtime_error("malformed arc record");
+            if (u<1 || v<1 || u>(int64_t)g.adj.size() || v>(int64_t)g.adj.size() ||
+                w<0 || w>numeric_limits<int>::max()) throw runtime_error("invalid arc");
+            g.adj[u-1].push_back({static_cast<int>(v-1),static_cast<int>(w)});
+            if (++count > g.arcs) throw runtime_error("arc count mismatch");
         } else throw runtime_error("unknown DIMACS record");
     }
-    int64_t count=0; for (auto& a:g.adj) count+=a.size();
+    if (in.bad()) throw runtime_error("graph read failure");
+    if (!has_header) throw runtime_error("missing DIMACS header");
     if (count != g.arcs) throw runtime_error("arc count mismatch");
     return g;
 }
@@ -69,6 +84,7 @@ class FibHeap {
         if (!parent->child) parent->child=child; else insert_ring(parent->child,child); ++parent->degree; }
     // Coalesce equal-degree roots after extracting the minimum.
     void consolidate() {
+        // Snapshot roots before detach/link changes their circular list.
         vector<Node*> roots; Node* p=minimum;
         do { roots.push_back(p); p=p->right; } while(p!=minimum);
         vector<Node*> by_degree(64,nullptr); minimum=nullptr;
@@ -105,6 +121,7 @@ public:
         Node* z=minimum;
         if (!z) return nullptr;
         if (z->child) {
+            // Snapshot children before moving them into the root ring.
             vector<Node*> children; Node* p=z->child;
             do { children.push_back(p); p=p->right; } while(p!=z->child);
             for(Node* x:children) { detach(x); add_root(x); }
@@ -126,6 +143,8 @@ public:
 // Decrease an existing vertex key instead of creating duplicate heap entries.
 i64 fib_dijkstra(const Graph& g,int source,int target) {
     vector<i64> dist(g.adj.size(),INF);
+    // State 0: unseen; 1: active in heap; 2: settled. The fixed-size node array
+    // keeps pointers stored in the heap stable for the entire query.
     vector<Node> nodes(g.adj.size()); vector<uint8_t> state(g.adj.size(),0);
     FibHeap heap; nodes[source].key=0; nodes[source].vertex=source;
     dist[source]=0; state[source]=1; heap.push(&nodes[source]);
@@ -168,6 +187,9 @@ void self_test() {
 int main(int argc,char** argv) {
     try {
         if (argc==2 && string(argv[1])=="--self-test") {self_test(); cout<<"PASS: edge cases and 2000 random pairs\n"; return 0;}
+        if (argc==3 && string(argv[1])=="--validate") {
+            Graph g=read_graph(argv[2]); cout<<g.adj.size()<<" vertices, "<<g.arcs<<" arcs\n"; return 0;
+        }
         if (argc!=4) {cerr<<"usage: benchmark graph.gr queries seed\n"; return 2;}
         Graph g=read_graph(argv[1]); int q=stoi(argv[2]); unsigned seed=stoul(argv[3]);
         if(q<1000) throw runtime_error("at least 1000 queries required");

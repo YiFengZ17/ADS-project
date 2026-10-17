@@ -21,58 +21,51 @@ A binary heap is compact and simple, but its queue operations take logarithmic t
 
 ## Objectives and Scope
 
-We implement two complete point-to-point Dijkstra solvers, test their answers, and compare their per-query running times. The binary solver uses the standard priority queue with duplicate entries; the Fibonacci solver holds one node per discovered vertex and uses decrease-key. Both use the same graph, query pairs, distance type, relaxation rule, and early-stop condition. We test the NY, BAY, and COL distance graphs with 1,000 pairs each, exceeding the assignment's minimum of 1,000 pairs. The report includes the requested input links, runtime table, runtime-versus-input-size plot, and interpretation.
+We implement two complete point-to-point Dijkstra solvers, test their answers, and compare their per-query running times. The binary solver uses the standard priority queue with duplicate entries; the Fibonacci solver holds one node per discovered vertex and uses decrease-key. Both use the same graph, query pairs, distance type, relaxation rule, and early-stop condition. We test the NY, BAY, and COL distance graphs with 1,000 pairs each, exceeding the assignment's minimum of 1,000 pairs. The central question is whether the Fibonacci heap's theoretical advantage improves elapsed time on these road-network queries.
 
 The measured task is a single source-target shortest-path query, not all-pairs preprocessing or route reconstruction. Graph loading and pair generation are outside each timed interval. The implementation returns a distance, or `INF` if the target cannot be reached. This distinction matters when comparing results: an apparent speed advantage would be meaningless if one implementation answered a different problem.
 
 # Data Structure / Algorithm Specification
 
-## Input Graph and Distance Representation
+## Directed Road Graph
 
-The DIMACS shortest-path format uses a `p sp n m` header and `a u v w` records for directed arcs [3]. The parser ignores comments, allocates one adjacency list per vertex, and stores each arc with its destination and nonnegative integer weight. It rejects an invalid header, an out-of-range endpoint, a negative weight, an unknown record, or an arc count different from the header. Input IDs begin at 1; internal array indices begin at 0; CSV output converts IDs back to 1-based form.
+The input is a directed weighted graph $G=(V,E)$ with $n=|V|$ vertices and $m=|E|$ arcs. Each arc has a nonnegative integer weight. We store outgoing arcs in adjacency lists. A point-to-point query asks for the minimum total weight from a source to a target, or `INF` when no directed path exists. Input vertex IDs are 1-based; internal array positions are 0-based.
 
-Each query creates a 64-bit distance array initialized to a large sentinel, except for the source, which is zero. Using 64-bit distances prevents ordinary sums of 32-bit arc weights from overflowing the distance type. The implementation does not claim to handle a valid path whose sum reaches its chosen sentinel (`INT64_MAX/4`); the benchmark paths are far below it. Adjacency lists contain $O(n+m)$ graph data, where $n$ is the number of vertices and $m$ is the number of arcs. The queue and query arrays add space as described below.
+## Dijkstra's Algorithm
 
-## Common Dijkstra Procedure
+Dijkstra's algorithm maintains a tentative distance for each vertex and a set of settled vertices [1]. Its required queue operations are insert, extract-min, and update after a shorter path is discovered. Starting from distance zero at the source, it extracts the smallest tentative distance and relaxes the outgoing arcs. The query ends when the target is extracted or the queue empties. Nonnegative weights make an extracted valid distance final [1].
 
-At any point, `dist[v]` is the best source-to-`v` path length found so far. On removing the smallest valid queue item `(d,u)`, the algorithm inspects each outgoing arc `(u,v,w)`. If `d+w < dist[v]`, it updates `dist[v]` and the queue. A valid extraction of the target ends the query. If the queue becomes empty first, the target is unreachable. The following pseudocode shows the shared behavior; `update` is implemented differently by the two heaps.
+## Binary Heap
 
-```text
-dist[source] = 0; push(source, 0)
-while queue is not empty:
-    (d, u) = extract_min()
-    if entry is stale: continue       // binary heap only
-    if u == target: return d
-    for each outgoing arc (u, v, w):
-        if v is unsettled and d + w < dist[v]:
-            dist[v] = d + w
-            update(v, dist[v])
-return INF
-```
-
-The early stop is important for point-to-point evaluation: a short query need not settle every reachable vertex. Both versions stop at the same logical event, extraction of the target with its final distance. They do not use a heuristic, bidirectional search, or road-specific preprocessing.
-
-## Lazy Binary Heap
-
-The baseline stores `(distance, vertex)` pairs in the C++ binary `priority_queue`. When a better path is found, it pushes a new pair instead of locating and decreasing an older pair. Consequently, a vertex can have several queue entries. At extraction, the code compares the popped key with `dist[vertex]` and discards the pair if the values differ. Since a better key was already inserted, this discarded entry cannot affect the answer. The heap is an array-backed container, and the implementation relies on the standard ordering of pairs.
-
-There are at most $O(m)$ successful relaxations and therefore at most $O(m)$ pushed entries. Each push and pop costs $O(\log m)$ in the worst case. Scanning arcs costs $O(m)$, giving a conservative per-query time bound of $O((n+m)\log m)$ and up to $O(n+m)$ query space [1]. On these sparse road graphs, $m$ is only a few times $n$, but the bound alone does not describe the number of vertices settled before an individual target is reached.
+A binary min-heap stores keys in an array and supports insert and extract-min. Our baseline uses C++ `priority_queue` of `(distance, vertex)` pairs. On an improved distance it inserts a new pair, leaving any older copy in the queue. When an old copy is later extracted, its key differs from the current distance and is skipped. This is a lazy alternative to an indexed decrease-key operation.
 
 ## Fibonacci Heap
 
-The Fibonacci version stores one heap node for each discovered, unsettled vertex. Each node contains its tentative-distance key, vertex ID, degree, mark bit, parent, child, and sibling links. Root and child lists are circular doubly linked rings. The heap keeps a pointer to the minimum root. A first discovery inserts the vertex as a root; a later improvement decreases the same node's key. A settled vertex is never reinserted, as permitted by nonnegative arc weights.
+A Fibonacci heap is a collection of heap-ordered trees with a pointer to the minimum root [2]. It supports insert, extract-min, and decrease-key. Our implementation uses circular sibling lists, consolidation of equal-degree roots, and cascading cuts after key decreases. Only discovered, unsettled vertices are active in the heap. For direct indexing, `fib_dijkstra` physically constructs a `Node` array for **all** $n$ vertices at the start of each query; unused nodes never become active heap members.
 
-Extract-min removes the minimum root, moves its children to the root list, and consolidates roots until no two roots have the same degree. Consolidation links the larger-key root below the smaller-key root. Decrease-key cuts a node when its new key violates its parent's order. A first lost child marks the parent; a further child loss cuts that parent and may cascade upward [2]. These rules maintain heap order and the degree properties used in the amortized analysis. The implementation's key choices are direct node indexing by vertex ID and allocating the node array once per query; it does not allocate a new object on each relaxation.
+# Implementation and Algorithm Analysis
 
-Standard Fibonacci-heap analysis gives amortized $O(1)$ insertion and decrease-key and $O(\log n)$ extract-min [2]. At most $n$ vertices can be extracted, and at most $m$ arcs can be relaxed, so the resulting Dijkstra bound is $O(m+n\log n)$ per query. The heap has at most $n$ active nodes. Together with graph storage and arrays, total space is $O(n+m)$. These are amortized operation bounds, not a guarantee that a particular short query will run faster than the binary version.
+## Shared Search and Input Validation
 
-## Correctness Argument
+Both solvers use the same parser, adjacency lists, 64-bit distance type, relaxation rule, and early stop at the target. The DIMACS parser requires exactly one valid `p sp n m` header before all `a u v w` records [3]. It checks each record's required fields, nonnegative header arc count, vertex range, nonnegative arc weight, and final arc count. Unknown records and malformed rows are rejected. The 64-bit distance array uses `INT64_MAX/4` as its infinity sentinel; the tested path lengths are far below that value.
 
-The initial distance of the source is zero and all other distances are infinity. Every finite tentative distance is the length of an actual discovered path, because it is created by extending a previously discovered path over one arc. Relaxation only lowers a tentative distance. The queue therefore always has an entry for the best known distance of each discovered, unsettled vertex: the binary heap may also hold obsolete copies, while the Fibonacci heap changes the one existing node.
+A query starts with `dist[source]=0`. On a valid minimum extraction `(d,u)`, each outgoing arc `(u,v,w)` proposes `d+w`. If this is smaller than `dist[v]`, the solver changes the tentative distance and updates its queue. The binary queue may return stale entries, which are discarded. The Fibonacci queue holds one active node per discovered vertex and decreases its key instead of inserting a duplicate. Neither method uses a road-specific heuristic or preprocessing.
 
-Assume the algorithm extracts a valid minimum vertex `u` with distance `d`. If there were a shorter path to `u`, consider the first vertex on that path not yet settled. Its predecessor would already have been settled and would have relaxed the connecting arc. Because weights are nonnegative, that first unsettled vertex would have a tentative distance at most the purported shorter path length, less than `d`. It would have been selected before `u`, a contradiction. Thus `d` is final [1]. Induction over valid extractions proves the distance result, and the same argument justifies stopping at the target. For an unreachable target, the queue eventually empties without extracting it.
+## Queue Operations and Complexity
 
-This proof assumes that each heap operation preserves the stated minimum and update behavior. The random cross-checks and sanitizers test the implementation of those operations, but finite tests cannot prove every pointer configuration correct. The two solvers are independent in queue management and share the graph parser and relaxation semantics.
+The lazy binary queue may receive up to $O(m)$ entries from successful relaxations. Each insertion and removal costs $O(\log m)$; scanning arcs costs $O(m)$. A conservative per-query upper bound is $O((n+m)\log m)$ time and $O(n+m)$ graph-plus-query space [1]. The extra entries explain why the binary method uses more queue slots than an indexed version might, but they avoid maintaining an index for decrease-key.
+
+The Fibonacci queue has amortized $O(1)$ insert and decrease-key and $O(\log n)$ extract-min [2]. At most $m$ arc relaxations and $n$ vertex extractions give $O(m+n\log n)$ amortized time. Graph storage, distances, states, and the preconstructed `Node` array together use $O(n+m)$ space. The number of **active** nodes can be smaller than $n$, but the physical node-array allocation is always $n$ per query. These bounds concern worst-case graph size and amortized operations; they do not predict the measured cost of a short target query.
+
+## Heap Invariants and Correctness
+
+Every finite tentative distance is the length of a discovered source-to-vertex path. Relaxation can only lower it. The binary queue retains at least one current entry for each discovered, unsettled vertex; obsolete entries are skipped. The Fibonacci queue stores its current key in the vertex's one active node. Each valid extract-min therefore selects the smallest tentative distance.
+
+Suppose that a valid extracted vertex `u` had a shorter path than its extracted distance. On that path, take the first unsettled vertex. Its settled predecessor would have relaxed the connecting arc, giving it a tentative distance no larger than the shorter path length. With nonnegative weights, this value would be smaller than `u`'s extracted key, contradicting extract-min. Thus extracted distances are final [1]. This argument proves that stopping when the target is extracted gives the shortest distance, provided the queue operations maintain their invariants. The parser checks and randomized tests exercise the implementation; they are not a formal proof of every pointer operation.
+
+## Code-Level Costs Relevant to Timing
+
+`binary_dijkstra` creates and fills a distance array for each query. `fib_dijkstra` creates distance and state arrays **and initializes a `Node` array of size $n$**, even if the search reaches only a small part of the graph. The node pointers remain stable because this array is not resized during the query. In `FibHeap::consolidate`, each extract-min creates temporary `roots` and `by_degree` vectors; `FibHeap::pop` also creates a `children` vector when the removed root has children. Those allocations, the list traversal, and the node initialization fall inside the measured query interval. They are implementation facts, not measured percentages of the runtime gap.
 
 # Testing Results
 
@@ -94,7 +87,7 @@ The header counts and average directed arcs per vertex are shown below. The thre
 | BAY | 321,270 | 800,172 | 2.491 |
 | COL | 435,666 | 1,057,066 | 2.426 |
 
-For each graph, a `mt19937` generator seeded with `20261016` draws 1,000 source-target pairs uniformly from the valid vertex IDs. The generated vector is retained and passed unchanged to both algorithms. Sampling permits repeated vertices and pairs; no pairs were filtered based on distance. The CSV records each pair and its answer, making the exact benchmark workload reproducible with the same executable and seed. Across the sampled pairs, all targets were reachable. The median returned distances were 468,366.5, 1,053,037.0, and 2,624,367.0 for NY, BAY, and COL, respectively; these are weight units from the distance files, not elapsed times.
+For each graph, a `mt19937` generator seeded with `20261016` draws 1,000 source-target pairs uniformly from the valid vertex IDs. The generated vector is retained and passed unchanged to both algorithms. Sampling permits repeated vertices and pairs; no pairs were filtered based on distance. The CSV records each pair and its answer, making the exact benchmark workload reproducible with the same executable and seed. All sampled targets were reachable.
 
 ## Implementation and Timing Environment
 
@@ -103,20 +96,39 @@ For each graph, a `mt19937` generator seeded with `20261016` draws 1,000 source-
 | Experiment date | 2026-10-16 |
 | CPU | Apple M4 |
 | Operating system | macOS 26.3.1 |
-| Compiler and language | Apple clang 21.0.0; C++17 |
+| Compiler | Apple clang 21.0.0; C++17 |
 | Optimized flags | `-O2 -Wall -Wextra -Wpedantic` |
 | Timer | `std::chrono::steady_clock`, wall elapsed time |
 | Pair generation | `mt19937`, seed `20261016` |
 | Timed repetitions | 1 per pair and method; 1,000 pairs per graph |
 | Execution order | All binary queries, then all Fibonacci queries, per graph |
 
-A timer starts immediately before a Dijkstra call and stops immediately after it returns. The recorded interval includes allocating and initializing per-query arrays and heap nodes, queue work, arc scans, and termination. It excludes file decompression, graph parsing, query generation, CSV writing, plotting, and report generation. This is therefore an end-to-end query time for this implementation, not the isolated cost of heap operations. Each query is timed once; the 1,000 distinct pairs provide a distribution of workloads rather than repeated timings of one identical query.
+A timer starts immediately before a Dijkstra call and stops immediately after it returns. The interval includes per-query array and node initialization, queue work, arc scans, and termination. It excludes decompression, parsing, pair generation, CSV writing, plotting, and report generation. This is an end-to-end query time, not the isolated cost of heap operations. Each pair is timed once; the 1,000 sampled pairs provide a workload distribution, not repeated timing uncertainty for one query.
 
-The source can be built with `make` from the experiment directory. `make self-test` runs functional checks; `make sanitizer` compiles and runs the same checks with address and undefined-behavior sanitizers. After downloading and decompressing each graph, the command `./build/benchmark data/USA-road-d.NY.gr 1000 20261016 > data/results-NY.csv` illustrates a benchmark run; replace `NY` by `BAY` or `COL` for the others. `python3 scripts/analyze.py` verifies CSV pairing and creates the summary and plot. The local `data/` and `build/` directories are ignored by Git. The submitted PDF contains aggregated results, and the download links permit independent regeneration without uploading the large inputs.
+The **TA package root** is the working directory for every command below. It contains `Makefile`, `code/main.cpp`, and `scripts/analyze.py` and `scripts/test_parser.py`. The anonymous package has the same executable layout. The commands build code, check correctness, download the three inputs, generate per-query CSVs, and create the summary table and figure. The historical CSVs are not included; running the commands creates new local results on the reader's machine.
+
+```sh
+make
+make self-test parser-test sanitizer
+mkdir -p data
+for x in NY BAY COL; do
+  curl -L --fail "https://www.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.$x.gr.gz" -o "data/USA-road-d.$x.gr.gz"
+  gzip -cd "data/USA-road-d.$x.gr.gz" > "data/USA-road-d.$x.gr"
+  ./build/benchmark --validate "data/USA-road-d.$x.gr"
+  ./build/benchmark "data/USA-road-d.$x.gr" 1000 20261016 > "data/results-$x.csv"
+done
+python3 scripts/analyze.py
+```
+
+The three benchmark CSVs appear in `data/`. The analysis script checks paired distances and writes `data/summary.csv`, `data/distribution.csv`, and the PDF and PNG plot in `figures/`. Executables appear in `build/`. These generated files are local outputs, not submission contents.
+
+Report compilation is a separate author workflow using the Markdown source and XeLaTeX in the development directory. It is not needed to reproduce the submitted program results.
 
 ## Correctness Checks
 
 The hand-built graph exercises a seven-weight shortest path that improves an earlier ten-weight candidate, a zero-weight final arc, source equal to target, and an unreachable target. A separate path with two arcs of weight 2,000,000,000 checks that the returned distance is 4,000,000,000 rather than a 32-bit overflow. For randomized checking, 100 directed graphs with 30 vertices and 200 randomly weighted arcs each contribute 20 random source-target pairs. Both algorithms returned equal answers for all 2,000 small-graph pairs. AddressSanitizer and UndefinedBehaviorSanitizer reported no error during this self-test.
+
+After the original timing run, a parser regression test was added on 2026-10-17. It checks rejection of a missing or repeated header, a truncated record, an arc before the header, and invalid header fields. The fixed parser also accepted all three original DIMACS files, with the vertex and arc counts shown above. These new validation checks do not change the historical timing values in the tables.
 
 During official benchmarking, the program computes all binary answers, then checks each Fibonacci answer against the corresponding binary result. It exits with an error on the first mismatch. The three benchmark programs completed successfully, so all 3,000 paired distances matched. This equality is an empirical check, not an independent oracle: a shared parser or relaxation bug could affect both methods. The small hand-built cases address some such shared errors, while a formal proof and broader tests would be needed for stronger assurance.
 
@@ -154,7 +166,7 @@ The ratio of Fibonacci mean to binary mean is 6.54 for NY, 6.22 for BAY, and 6.3
 
 ## Analysis, Limitations, and Improvements
 
-The Fibonacci heap's asymptotic advantage depends on the mix of decrease-key and extract-min operations and whether its amortized savings overcome constant costs [2]. The binary heap uses a compact array of pairs; the Fibonacci heap manipulates linked trees. The data are consistent with those mechanisms explaining the gap, but we did not measure operation counts or hardware events, so we cannot assign a measured fraction of time to either mechanism.
+The three graphs have only 2.426-2.776 arcs per vertex. For a sparse graph family with $m=\Theta(n)$, both the binary bound $O((n+m)\log m)$ and the Fibonacci bound $O(m+n\log n)$ reduce to $O(n\log n)$ [1], [2]. A stronger bound for general graphs therefore does not by itself predict a win here. In this code, `fib_dijkstra` initializes $n$ `Node` objects plus distance and state arrays for every query. `FibHeap::consolidate` constructs temporary `roots` and `by_degree` vectors, and `FibHeap::pop` may construct a `children` vector. The binary version uses an array-backed queue and only a distance array. All of those operations lie inside the timed interval. They are plausible contributors to the measured gap, but no operation-level timing or hardware counters were collected, so their individual contributions remain unmeasured.
 
 First, the runs use one machine and one timing pass per pair. Scheduling, frequency changes, cache state, and other processes can perturb wall-clock timing. Alternating heap order and repeating the full experiment on a quiet machine would give more stable estimates. Second, the three networks differ in geography and average degree as well as size; the rising lines cannot establish a scaling law from size alone. More official road graphs and controlled graph families would help separate those effects. Third, the comparison is between the particular lazy binary implementation and this particular Fibonacci implementation. An indexed binary heap, different memory layout, or optimized Fibonacci heap could change the gap. These limits qualify the claim; they do not change the observed timings and answer agreement on the tested inputs.
 
@@ -173,3 +185,27 @@ Both Dijkstra implementations, including the decrease-key Fibonacci heap, agreed
 # Author List
 
 YiFeng Zheng and YuJie Sun, Group 17.
+
+## Division of Work
+
+YuJie Sun was responsible for the main program: the two Dijkstra implementations, heap operations, graph input and benchmark code. YuJie also analyzed the runtime results and the relationship between the measured behavior and the code's data structures.
+
+YiFeng Zheng was responsible for testing and the report. This included correctness and input-validation checks, organizing the reproducible experiment procedure, preparing the result tables and figure, and writing and revising the report from the recorded outputs and group analysis.
+
+## Collaboration Summary
+
+The code, tests, data analysis, and report were combined into the same submission. The named and anonymous packages carry the same executable source and reproduction instructions. The runtime table reports the original recorded run; later parser checks are identified separately rather than presented as part of that earlier timing run.
+
+# Declaration
+
+This Project 2 submission is presented by Group 17. The report states the algorithms, dataset sources, measurement procedure, observed results, and known limitations. The named group members are listed below for electronic submission.
+
+# Signatures
+
+YiFeng Zheng (typed name)
+
+YuJie Sun (typed name)
+
+# Source Code Appendix
+
+The complete commented C++17 source is supplied as `code/main.cpp` beside this report in each submission package. Its main entry points are `read_graph`, `binary_dijkstra`, `FibHeap`, `fib_dijkstra`, `self_test`, and `main`. The exact compile and run commands are in the package `README.md`; the graph files and raw timing CSVs are obtained or generated locally and are not bundled.

@@ -1,0 +1,12 @@
+# Project 2 review response
+
+- Date: 2026-10-17
+- Review addressed: `opinion/2026-10-17-codex-grading-review.md` from remote commit `f02bc0b`
+- Scope: Project 2 code, report, and named/anonymous submission packages
+
+1. **Package reproduction.** Both submission directories now include the same `Makefile`, `code/main.cpp`, `scripts/analyze.py`, `scripts/test_parser.py`, and package-specific PDF. Their README uses the package root as the working directory and shows the path from official downloads to CSV, summary table, and plot. These commands were exercised from each package. Historical raw timing files remain local and are not bundled.
+2. **Performance explanation.** The report now identifies whole-graph `Node` construction and the temporary vectors in `consolidate()` and `pop()` as timed implementation work. It also notes that the three measured graphs are sparse, with $m/n$ from 2.426 to 2.776, so the cited worst-case bounds both reduce to $O(n\log n)$ for a sparse graph family. The report does not claim an unmeasured percentage of the timing gap is caused by any one operation.
+3. **Input validation.** The parser now requires one header before arcs, checks each record's fields and ranges, rejects a negative arc count, and verifies the final number of arcs. A CLI regression script covers missing/duplicate headers, truncated input, arc-before-header, and invalid header cases. The three original official graph files validate with their recorded counts. The parser change does not alter the historical timing table.
+4. **Text and report structure.** The report now says “1,000 sampled pairs” consistently, distinguishes active heap nodes from the full allocated array, and keeps Chapter 2 focused on definitions and required operations. Complexity and correctness were moved to the following analysis chapter. The named report now follows the updated template's final Declaration, Signatures, and Source Code Appendix structure. Division of Work reflects the group roles supplied by the user; the signature section contains typed names as requested. The anonymous PDF omits identifying sections.
+
+The review's suggestions for repeated, order-balanced timing and an independent oracle remain future improvements; no new timing experiment is claimed here. The named and anonymous PDFs were rebuilt from `report/report.md`, and both packages were synchronized from the development source.

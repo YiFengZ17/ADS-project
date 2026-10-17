@@ -44,5 +44,6 @@ for r in rows:
     if r['method']=='binary': ax.annotate(r['dataset'],(r['nodes'],r['mean_ms']),xytext=(3,5),textcoords='offset points',fontsize=9)
 ax.set(xlabel='Vertices in road network',ylabel='Mean time per query (ms)')
 ax.grid(alpha=.25);ax.legend();fig.tight_layout()
+(ROOT/'figures').mkdir(parents=True,exist_ok=True)
 fig.savefig(ROOT/'figures'/'runtime-vs-size.pdf')
 fig.savefig(ROOT/'figures'/'runtime-vs-size.png',dpi=180)
