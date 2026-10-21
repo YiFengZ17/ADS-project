@@ -238,24 +238,13 @@ Benchmark( const char *CsvPath, const char *InputDirectory, int Repeats )
              "cannot create input directory", "driver" );
     fprintf( Csv, "scenario,n,repeat,seed,tree,insert_seconds,delete_seconds,total_seconds\n" );
 
-    /* Warm up before timing. */
-    for( Which = 0; Which < TREES; ++Which )
-    {
-        T = NULL;
-        for( I = 0; I < 256; ++I )
-            T = Insert( Which, I, T );
-        for( I = 0; I < 256; ++I )
-            T = Delete( Which, I, T );
-        Require( T == NULL, "warmup failure", Names[ Which ] );
-    }
-
     for( S = 0; S < sizeof( Sizes ) / sizeof( Sizes[ 0 ] ); ++S )
     {
         N = Sizes[ S ];
         Insertion = NewNode( (size_t)N * sizeof( *Insertion ) );   // Shared input arrays
         Deletion = NewNode( (size_t)N * sizeof( *Deletion ) );
         for( Scenario = 0; Scenario < 3; ++Scenario )
-        for( Repeat = 0; Repeat < Repeats; ++Repeat )
+        for( Repeat = -1; Repeat < Repeats; ++Repeat ) // -1 is a full warmup run
         {
             Seed = 0x9e3779b9u ^ (uint32_t)N ^ (uint32_t)( Repeat + 1 ) * 0x85ebca6bu;
             State = Seed;
@@ -274,7 +263,7 @@ Benchmark( const char *CsvPath, const char *InputDirectory, int Repeats )
             }
             WriteInputs( InputDirectory, N, Scenario, Repeat, Seed, Insertion, Deletion );
 
-            Offset = ( Repeat + Scenario + (int)S ) % TREES;
+            Offset = ( ( Repeat < 0 ? 0 : Repeat ) + Scenario + (int)S ) % TREES;
             for( K = 0; K < TREES; ++K )
             {
                 Which = ( K + Offset ) % TREES;   // Rotate tree order
@@ -295,9 +284,12 @@ Benchmark( const char *CsvPath, const char *InputDirectory, int Repeats )
                 DeleteTime = Seconds() - Start;
 
                 Require( T == NULL, "tree not empty after deletion phase", Names[ Which ] );
-                fprintf( Csv, "%s,%d,%d,%u,%s,%.9f,%.9f,%.9f\n", Scenarios[ Scenario ], N,
-                         Repeat, Seed, Names[ Which ], InsertTime, DeleteTime, InsertTime + DeleteTime );
-                fflush( Csv );             // Keep a partial run readable
+                if( Repeat >= 0 )          // Do not include warmup times in results
+                {
+                    fprintf( Csv, "%s,%d,%d,%u,%s,%.9f,%.9f,%.9f\n", Scenarios[ Scenario ], N,
+                             Repeat, Seed, Names[ Which ], InsertTime, DeleteTime, InsertTime + DeleteTime );
+                    fflush( Csv );         // Keep a partial run readable
+                }
                 T = MakeEmpty( Which, T );
             }
             fprintf( stderr, "Completed N=%d %s repetition=%d\n", N, Scenarios[ Scenario ], Repeat );
@@ -315,7 +307,7 @@ main( int Argc, char **Argv )
     if( Argc == 2 && strcmp( Argv[ 1 ], "--check" ) == 0 )
         Check();
     else if( Argc == 4 && strcmp( Argv[ 1 ], "--bench" ) == 0 )
-        Benchmark( Argv[ 2 ], Argv[ 3 ], 3 );   // Three repetitions per trial
+        Benchmark( Argv[ 2 ], Argv[ 3 ], 10 );  // Ten measured runs after one warmup
     else
     {
         fprintf( stderr, "Usage: %s --check | --bench results.csv inputs\n", Argv[ 0 ] );

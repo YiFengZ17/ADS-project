@@ -5,11 +5,11 @@ YuJie Sun
 
 Group number: 17
 
-Date: 2026-10-03
+Date: 2026-10-21
 
 ## Abstract
 
-This report investigates the performance of five search trees on sequences of insertions and deletions: unbalanced binary search trees, AVL trees, splay trees, red-black trees, and B+ trees. Correctness is checked by an insertion/deletion smoke test for each tree, run under memory and undefined-behavior sanitizers. Each timed configuration is repeated three times. Ordered BST insertion exhibits quadratic growth, while balanced and adaptive trees avoid that total-cost behavior. Phase-separated plots reveal the benefits of splaying on ordered sequences. All programs are implemented in C.
+This report investigates the performance of five search trees on sequences of insertions and deletions: unbalanced binary search trees, AVL trees, splay trees, red-black trees, and B+ trees. Correctness is checked by an insertion/deletion smoke test for each tree, run under memory and undefined-behavior sanitizers. Each configuration has one warmup and ten measured runs. Ordered BST insertion exhibits quadratic growth, while balanced and adaptive trees avoid that total-cost behavior. Phase-separated plots reveal the benefits of splaying on ordered sequences. All programs are implemented in C.
 
 # Introduction
 
@@ -83,15 +83,19 @@ The experiment was conducted in the following environment.
 
 | Item | Configuration |
 | --- | --- |
-| Experiment date | 2026-10-03 |
+| Experiment date | 2026-10-21 |
 | CPU | AMD Ryzen 7 H 255 W/ Radeon 780M |
 | Operating system | WSL2; Linux 6.6.87.2-microsoft-standard-WSL2; x86-64 |
 | Compiler | gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0 |
 | Build flags | -std=c11 -O2 -Wall -Wextra -Wpedantic |
 | Timer | POSIX CLOCK_MONOTONIC, elapsed wall time |
-| Repetitions | 3 for each scenario / size / tree |
+| Repetitions | 1 warmup + 10 measured runs per scenario / size / tree |
 | Execution | One process; sequential; no CPU affinity |
 | B+ capacity | 32 leaf records or 32 internal children |
+
+Each warmup runs the full insertion and deletion sequence and is left out of the results. Random runs use different seeds; all trees share the inputs for each run, and their test order rotates. Input output and checks are outside timing. Allocation and freeing are included.
+
+These timings replace the earlier three-run results. The new run has not yet been checked by the other group member.
 
 
 ## Smoke Test
@@ -104,14 +108,14 @@ Observed smoke test results.
 | INT_MIN and INT_MAX; 1,000 increasing keys | Functional | Both boundary keys found; sampled keys found; an absent key reported absent |
 | Full insert-then-delete cycle | Functional | Every key accepted, then removed; NULL root afterwards; PASS |
 | Same cycle under ASan and UBSan | Memory / undefined behavior | No sanitizer diagnostics; PASS |
-| All 315 timed trials, N up to 100,000 | Large-scale | Sampled keys present after insertion; NULL root after deletion; PASS |
+| All 1,050 timed trials, N up to 100,000 | Large-scale | Sampled keys present after insertion; NULL root after deletion; PASS |
 
 README.md documents how to reproduce every result in this chapter. The smoke test checks sampled membership and a full deletion cycle; it does not replace those structural checks.
 
 ## Runtime Tables
 
 - Times are in milliseconds (ms); N is the number of keys.
-- Each value is the median total insertion-plus-deletion time of three runs.
+- Each value is the median total insertion-plus-deletion time of ten runs.
 
 ### Increasing insertion / increasing deletion
 
@@ -119,13 +123,13 @@ Increasing insertion / increasing deletion: median total elapsed time (ms).
 
 | N | BST | AVL | Splay | RedBlack | BPlus32 |
 | --- | --- | --- | --- | --- | --- |
-| 1,000 | 1.151 | 0.055 | 0.027 | 0.143 | 0.054 |
-| 2,000 | 4.646 | 0.202 | 0.084 | 0.392 | 0.186 |
-| 5,000 | 27.751 | 0.408 | 0.176 | 0.876 | 0.394 |
-| 10,000 | 111.839 | 1.163 | 0.447 | 2.279 | 1.012 |
-| 20,000 | 444.720 | 1.644 | 0.788 | 4.374 | 1.797 |
-| 50,000 | 2757.504 | 7.110 | 1.843 | 14.321 | 5.003 |
-| 100,000 | 10999.209 | 16.004 | 3.402 | 37.267 | 11.107 |
+| 1,000 | 2.149 | 0.100 | 0.049 | 0.289 | 0.111 |
+| 2,000 | 8.610 | 0.287 | 0.159 | 0.642 | 0.257 |
+| 5,000 | 53.274 | 0.912 | 0.430 | 2.026 | 0.879 |
+| 10,000 | 164.166 | 1.373 | 0.510 | 3.021 | 1.223 |
+| 20,000 | 566.240 | 2.365 | 0.941 | 6.211 | 2.887 |
+| 50,000 | 3580.839 | 10.540 | 3.160 | 22.409 | 7.436 |
+| 100,000 | 14125.182 | 15.582 | 4.662 | 42.506 | 14.330 |
 
 ### Increasing insertion / reverse deletion
 
@@ -133,13 +137,13 @@ Increasing insertion / reverse deletion: median total elapsed time (ms).
 
 | N | BST | AVL | Splay | RedBlack | BPlus32 |
 | --- | --- | --- | --- | --- | --- |
-| 1,000 | 2.348 | 0.087 | 0.036 | 0.179 | 0.100 |
-| 2,000 | 9.652 | 0.173 | 0.097 | 0.321 | 0.209 |
-| 5,000 | 57.488 | 0.422 | 0.195 | 0.839 | 0.592 |
-| 10,000 | 219.320 | 0.708 | 0.381 | 1.763 | 0.986 |
-| 20,000 | 886.977 | 1.621 | 0.779 | 4.072 | 2.177 |
-| 50,000 | 5483.877 | 5.159 | 1.950 | 13.683 | 6.083 |
-| 100,000 | 21933.532 | 15.375 | 3.894 | 36.391 | 14.964 |
+| 1,000 | 4.359 | 0.167 | 0.058 | 0.289 | 0.164 |
+| 2,000 | 17.282 | 0.314 | 0.153 | 0.626 | 0.320 |
+| 5,000 | 95.568 | 0.700 | 0.463 | 1.642 | 1.069 |
+| 10,000 | 282.964 | 1.307 | 0.513 | 2.378 | 1.447 |
+| 20,000 | 1136.756 | 2.410 | 1.013 | 5.952 | 3.009 |
+| 50,000 | 7040.576 | 8.018 | 2.516 | 18.855 | 8.788 |
+| 100,000 | 28626.761 | 17.897 | 4.919 | 42.303 | 17.921 |
 
 ### Random insertion / random deletion
 
@@ -147,19 +151,19 @@ Random insertion / random deletion: median total elapsed time (ms).
 
 | N | BST | AVL | Splay | RedBlack | BPlus32 |
 | --- | --- | --- | --- | --- | --- |
-| 1,000 | 0.077 | 0.126 | 0.118 | 0.201 | 0.121 |
-| 2,000 | 0.172 | 0.298 | 0.296 | 0.430 | 0.241 |
-| 5,000 | 0.555 | 0.881 | 0.877 | 1.233 | 0.777 |
-| 10,000 | 1.283 | 2.471 | 2.521 | 3.278 | 2.421 |
-| 20,000 | 2.661 | 4.235 | 4.836 | 6.370 | 3.356 |
-| 50,000 | 9.664 | 15.876 | 15.423 | 19.003 | 10.389 |
-| 100,000 | 22.791 | 37.573 | 41.841 | 52.854 | 22.443 |
+| 1,000 | 0.183 | 0.332 | 0.284 | 0.467 | 0.257 |
+| 2,000 | 0.350 | 0.600 | 0.572 | 0.812 | 0.478 |
+| 5,000 | 0.839 | 1.370 | 1.473 | 2.053 | 1.174 |
+| 10,000 | 1.664 | 2.987 | 2.480 | 3.615 | 1.927 |
+| 20,000 | 3.864 | 5.887 | 6.384 | 8.525 | 4.583 |
+| 50,000 | 11.038 | 18.561 | 20.512 | 26.303 | 12.713 |
+| 100,000 | 31.499 | 46.491 | 52.260 | 73.465 | 32.181 |
 
 ## Runtime Plots
 
 - Panels show insertion, deletion, and total time.
 - Axes show N and seconds, both on logarithmic scales.
-- Colors and markers identify trees; points show three-run medians and error bars show the observed range.
+- Colors and markers identify trees; points show ten-run medians and error bars show the minimum and maximum.
 
 ![Increasing insertion / increasing deletion. Each phase uses the same scale as its counterpart in the other scenarios.](../figures/increasing_same.png)
 
@@ -209,7 +213,7 @@ All five trees use linear storage. Auxiliary space is constant for iterative upd
 
 ## Measured Comparison
 
-At N = 100,000, Splay is fastest in both ordered tests (3.402 and 3.894 ms). In the random test, BPlus32 takes 22.443 ms and BST takes 22.791 ms, only about 1.5% apart. With three runs, this shows close performance. BST is faster at all smaller random-test sizes.
+At N = 100,000, Splay has the lowest median in both ordered tests (4.662 and 4.919 ms). In the random test, BST takes 31.499 ms and BPlus32 takes 32.181 ms, about 2.2% apart. Their ranges are 27.808–43.305 ms and 25.349–39.503 ms. These results show close performance, not a stable winner.
 
 - Random BST: shuffled insertion avoids the fixed chain caused by sorted keys. Our iterative code has no height updates, color changes, or rotations. Less extra work helps explain its low times, but it does not guarantee short paths.
 - AVL and RedBlack: AVL updates heights and rotates when needed. RedBlack first searches for the key, then starts again from the root to delete it. It also changes colors and links on the way down and checks balance on return. This extra work may explain why it is slower here.
@@ -219,7 +223,7 @@ These are code-based explanations, not measured cost breakdowns. We did not coun
 
 ## Limitations and Improvements
 
-- Statistics: only three runs; use more repetitions to assess small differences.
+- Statistics: ten runs on one machine; system load and random inputs can affect small differences.
 - Workloads: only build-then-delete integer tests; add mixed operations and search benchmarks.
 - Page I/O: this in-memory benchmark does not measure disk access; test a disk-backed B+ tree.
 
@@ -227,7 +231,7 @@ These are code-based explanations, not measured cost breakdowns. We did not coun
 
 The results show that operation order affects tree performance. 
 Sorted insertions turn a plain BST into a chain, giving quadratic total time. AVL and red-black trees maintain logarithmic height through balancing. 
-In this experiment, Splay was fastest for both ordered workloads, while BPlus32 was fastest for the random workload at N = 100,000. These results show that the best choice depends on the workload, within the implementation and measurement limits discussed above.
+At N = 100,000, Splay has the lowest median in both ordered tests. BST and BPlus32 are close in the random test, with BST slightly faster by median. The best choice depends on the workload and the code used.
 
 # References
 
@@ -243,7 +247,7 @@ In this experiment, Splay was fastest for both ordered workloads, while BPlus32 
 
 ## Division of Work
 YiFeng Zheng: Implemented the programs, conducted the tests, and wrote the report.
-YuJie Sun: Reproduced the tests and reviewed the report.
+YuJie Sun: Reproduced the earlier tests and reviewed the report.
 
 # Declaration
 We hereby declare that all work in this project, titled “Compare Search Trees,” is our

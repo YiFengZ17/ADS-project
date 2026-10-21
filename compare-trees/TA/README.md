@@ -70,14 +70,15 @@ mkdir -p build/inputs
 ```
 
 The driver runs all five trees at N = 1,000, 2,000, 5,000, 10,000, 20,000, 50,000,
-and 100,000, with three repetitions of each scenario:
+and 100,000, with one warmup and ten measured runs for each scenario:
 
 1. Increasing insertion and increasing deletion.
 2. Increasing insertion and decreasing deletion.
 3. Independently shuffled insertion and deletion.
 
-Within each trial, all trees receive the same inputs. The run generates 315 timing
-rows in `build/results.csv` and 63 input files in `build/inputs/`. Trial progress is
+Within each trial, all trees receive the same inputs. The run generates 1,050 timing
+rows in `build/results.csv` and 231 input files in `build/inputs/` (21 warmup
+inputs and 210 measured inputs). Warmups use repeat -1 and are excluded from the CSV. Trial progress is
 printed to standard error. Ordered BST runs can take several minutes because their
 total cost is quadratic. Repeating the command overwrites the generated measurements.
 
@@ -94,10 +95,10 @@ are excluded.
 
 ## Compare with the report
 
-For each scenario, N, and tree, take the median of the three `total_seconds` values
+For each scenario, N, and tree, take the median of the ten `total_seconds` values
 and multiply by 1,000 to obtain total milliseconds. Compute insertion and deletion
 medians separately for the phase plots. Error bars represent the minimum and maximum
-of the three runs.
+of the ten measured runs.
 
 New timings will vary with hardware, compiler, and system load. These commands
 reproduce the experiment and its checks, not the exact historical timing values.
@@ -105,4 +106,5 @@ The submission does not include the Markdown sources, figures, or compiler neede
 to rebuild the report PDF.
 
 The report uses short explanations of update steps and performance differences.
-The original timing tables and benchmark code are unchanged.
+The timing tables and plots use a fresh ten-run experiment on 2026-10-21.
+The tree code is unchanged; the driver now runs one full warmup per configuration.

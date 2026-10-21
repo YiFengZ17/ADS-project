@@ -73,7 +73,7 @@ def convert(markdown):
                 level = int(t.tag[1:])
                 command = {1: 'section', 2: 'subsection', 3: 'subsubsection'}.get(level, 'paragraph')
                 # Reserve space for a following table together with its heading/caption.
-                reserve = 16 if title == 'References' else 5
+                reserve = {'References': 16, 'Declaration': 8}.get(title, 5)
                 child_headings = 0
                 for j in range(i+3, len(tokens)):
                     if tokens[j].type == 'heading_open':

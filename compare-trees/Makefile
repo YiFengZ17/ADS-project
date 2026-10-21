@@ -28,10 +28,16 @@ benchmark: $(BIN)
 analyze:
 	$(PYTHON) scripts/analyze.py
 
+plots: analyze
+	$(PYTHON) scripts/plot_results.py
+
+analysis-check:
+	$(PYTHON) scripts/test_analysis.py
+
 report draft:
 	$(PYTHON) scripts/build_report.py --compile
 
-.PHONY: all check sanitize benchmark analyze report draft package-code
+.PHONY: all check sanitize benchmark analyze report draft package-code plots analysis-check
 
 
 # Only sync source code after verification; PDFs require separate review.
