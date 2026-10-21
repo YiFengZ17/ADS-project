@@ -93,7 +93,9 @@ The experiment was conducted in the following environment.
 | Execution | One process; sequential; no CPU affinity |
 | B+ capacity | 32 leaf records or 32 internal children |
 
-Each warmup runs the full insertion and deletion sequence and is left out of the results. Random runs use different seeds; all trees share the inputs for each run, and their test order rotates. Input output and checks are outside timing. Allocation and freeing are included.
+For Scenario 3, two arrays start with keys 0 through $N-1$. Fisher-Yates shuffles each array: for $i$ from $N-1$ down to 1, swap entry $i$ with a random entry from 0 through $i$. The random indices come from xorshift32 through `BoundedRandom`. A fixed seed formula uses $N$ and the repetition number. The insertion array is shuffled first, then the deletion array without resetting the generator. Each key appears once in each array. All trees share these arrays; the seed and both orders are saved.
+
+Each warmup runs the full insertion and deletion sequence and is left out of the results. Tree order rotates across runs. Input output and checks are outside timing. Allocation and freeing are included.
 
 These timings replace the earlier three-run results. The new run has not yet been checked by the other group member.
 

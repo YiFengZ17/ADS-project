@@ -76,6 +76,9 @@ and 100,000, with one warmup and ten measured runs for each scenario:
 2. Increasing insertion and decreasing deletion.
 3. Independently shuffled insertion and deletion.
 
+Random inputs use Fisher-Yates shuffles driven by xorshift32. Seeds depend on N
+and the repetition number; the saved input files include the seed and both orders.
+
 Within each trial, all trees receive the same inputs. The run generates 1,050 timing
 rows in `build/results.csv` and 231 input files in `build/inputs/` (21 warmup
 inputs and 210 measured inputs). Warmups use repeat -1 and are excluded from the CSV. Trial progress is
