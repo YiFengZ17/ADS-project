@@ -43,6 +43,10 @@ Compared with an unbalanced BST, it imposes a strict height-balance constraint.
 
 `AvlBalance` repairs ancestors after recursive updates. It uses single rotations for LL/RR and double rotations for LR/RL imbalances, reconnecting child pointers and refreshing cached heights [2].
 
+Insertion follows the BST search path and creates a leaf. Deletion bypasses a node with at most one child; for two children, it copies the inorder successor's key and recursively deletes that successor. Both operations call `AvlBalance` on the return path and reconnect the returned subtree root.
+
+Let $b(T)=h(T_L)-h(T_R)$, with empty-subtree height -1. If $b(T)>1$, a nonnegative left-child balance calls for a right rotation; otherwise, rotate the left child left before rotating T right. If $b(T)<-1$, a nonpositive right-child balance calls for a left rotation; otherwise, rotate the right child right before rotating T left. A child balance of zero therefore uses a single rotation, which matters after deletion. Each rotation updates the demoted node's height before the promoted node's height. Repairs continue up the recursive return path, since deletion may shorten several ancestor subtrees.
+
 ## Splay Tree
 
 A splay tree is a self-adjusting BST that moves an accessed node to the root through rotations [3].
@@ -59,6 +63,16 @@ Beyond the BST ordering rule, it uses color metadata and these constraints to ma
 
 Our implementation uses the left-leaning variant described in [1]. Rotations promote a child, transfer the former root's color to it, and color the demoted node red; `FlipColors` toggles the parent and both children. Deletion uses `MoveRedLeft` or `MoveRedRight` before descending into a 2-node, and the final root is black.
 
+Insertion follows the BST path, creates a red leaf, and calls `RedBlackBalance` on return. This function applies three checks in order: rotate left if the right link is red; rotate right if the left and left-left links are red; flip colors if both child links are red. The public insertion function then colors the root black.
+
+Deletion first checks membership and returns unchanged if the key is absent. If both root children are black, it temporarily colors the root red. Null links count as black. The recursive deletion uses these branches:
+
+1. Before descending left, if the left and left-left links are both black, call `MoveRedLeft`. It flips the parent and child colors. If the right-left link is red, it then rotates the right child right, rotates the current node left, and flips colors again.
+2. In the other branch, first rotate right if the left link is red. If the current key matches and there is no right child, remove the node. Otherwise, if the right and right-left links are both black, call `MoveRedRight`. It flips colors and, when the left-left link is red, rotates right and flips colors again.
+3. After these adjustments, a matching key is replaced by its inorder successor, which is removed by `DeleteMin`; otherwise, deletion continues right. `DeleteMin` uses the same left-branch preparation. Each return calls `RedBlackBalance`, and the public function restores a black root if the tree is nonempty.
+
+The color moves prepare a branch to lose a key without leaving an unmatched black-height decrease. The return-path checks restore the left-leaning form.
+
 ## B+ Tree
 
 A B+ tree is a balanced multiway search tree with separator keys in internal nodes and records in linked leaves at the same depth [4].
@@ -66,6 +80,12 @@ A B+ tree is a balanced multiway search tree with separator keys in internal nod
 Unlike the binary branching of a BST, it allows multiple children per node, enforces occupancy constraints, and stores records separately in leaves.
 
 Following the split and redistribution rules in [4], the C code splits an overflowing node into 16 and 17 entries, propagating splits upward. Deletion borrows from a sibling with spare entries or merges adjacent nodes; a one-child root is replaced by its child. `Refresh` updates separator keys, and leaf splits and merges maintain the `Next` links.
+
+Here, an entry means a record in a leaf or a child pointer in an internal node. Each non-root node holds 16 to 32 entries. Internal separator keys are the minimum keys of all children except the first; a key equal to a separator goes to the child on its right.
+
+Insertion finds the target leaf and shifts records to make room. If its count reaches 33, the left node keeps 16 entries and a new right node gets 17. The parent inserts the new child pointer and refreshes its separators. An internal overflow is split in the same way; a root split creates a new root with two children.
+
+Deletion removes the record and shifts later records left. On return, `RepairChild` leaves a child with at least 16 entries unchanged. Otherwise, it first tries to borrow the left sibling's last entry, then the right sibling's first entry; the donor must have more than 16 entries. If neither can lend, it merges with the left sibling when available, or with the right sibling otherwise. The parent loses one child pointer, so underflow may continue upward. Leaves move records and repair `Next` after merging; internal nodes move child pointers. Affected minima and separators are refreshed. A one-child internal root is removed, and an empty leaf root becomes NULL.
 
 ## Correctness Argument
 
@@ -210,6 +230,16 @@ All five trees use linear storage. Auxiliary space is constant for iterative upd
 3. Random insertion / random deletion: BPlus32 is fastest (22.443 ms), while RedBlack is slowest (52.854 ms), a 2.35-fold difference.
 4. Performance rankings: From fastest to slowest, both ordered workloads rank Splay, BPlus32, AVL, RedBlack, BST; the random workload ranks BPlus32, BST, AVL, Splay, RedBlack.
 5. Scope: These rankings describe the results at N = 100,000 in this experiment and do not establish a universal ranking.
+
+The small gap in the random workload needs care: BPlus32 takes 22.443 ms and BST takes 22.791 ms at N = 100,000, a difference of about 1.5% relative to BST. With only three repetitions, these results show close performance rather than a clear advantage. BST has the lower median at every smaller tested size.
+
+Random insertion does not force the one-sided chain produced by sorted keys. Our BST also uses iterative updates without height updates, color changes, or balancing rotations. This lower maintenance cost is a plausible reason for its good random-workload times, even when its search paths are longer than those of a balanced tree. It does not guarantee short paths for every random trial or throughout deletion.
+
+AVL and red-black trees have the same asymptotic update bound, but their implementations do different work. AVL updates cached heights and rotates when needed. Our left-leaning red-black deletion first runs `RedBlackFind`, then traverses from the root again to delete the key. It also adjusts colors and links before descent and checks balance on return. These extra steps help explain why RedBlack is slower here; they do not establish that red-black trees are generally slower than AVL trees.
+
+BPlus32 trades work inside nodes for fewer tree levels. Internal routing uses binary search, and storing several keys together may improve memory locality. However, leaf updates scan and shift entries, while `Refresh` rebuilds separators along the return path. Splits, borrowing, and merges add more array work. This tradeoff is consistent with BPlus32's competitive times and its varying advantage over AVL across sizes and workloads. The test performs no disk I/O or leaf-chain range scans, so neither explains the measured speed.
+
+These explanations follow the code structure. The experiment does not count node visits, rotations, color changes, or cache misses, so it cannot isolate their contributions to elapsed time.
 ## Limitations and Improvements
 
 - Statistics: only three runs; use more repetitions to assess small differences.

@@ -45,7 +45,7 @@ make report PYTHON=.venv/bin/python
 
 `make draft` 是同一入口。生成 `build/md-report/report-from-md.tex`，XeLaTeX 编译三次，日志在 `build/md-report/compile.log`，最终报告是 `build/compare-search-trees.pdf`。脚本确认 Markdown 字节未变化；需要人工检查全文、表格、公式、目录和分页。正文普通单次换行转成分段，数学表达式可以用 `$...$`。
 
-构建不会覆盖 TA 或 Peer Review 的现有 PDF。作者检查后再把实名 PDF 保存为 `TA/yds_2026G17_P1.pdf`；匿名报告必须另行去除封面、作者列表、签名等身份信息并检查，再保存到 `Peer Review/compare-search-trees.pdf`。现有提交 PDF 保留为历史快照。
+构建不会覆盖 TA 或 Peer Review 的现有 PDF。作者检查后再把实名 PDF 保存为 `TA/yds_2026G17_P1.pdf`；匿名报告必须另行去除封面、作者列表、签名等身份信息并检查，再保存到 `Peer Review/compare-search-trees.pdf`。本次提交 PDF 已同步算法流程与性能原因分析的修订，历史计时数据保持不变。
 
 ## 更新提交代码
 

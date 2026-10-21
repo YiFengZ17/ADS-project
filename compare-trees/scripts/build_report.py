@@ -68,20 +68,24 @@ def convert(markdown):
                 body.append(r'\begin{center}\textbf{')
             else:
                 if before_body:
-                    body.append(r'\clearpage\tableofcontents\clearpage')
+                    body.append(r'\clearpage\begingroup\setlength{\parskip}{0pt}\tableofcontents\endgroup\clearpage')
                     before_body = False
                 level = int(t.tag[1:])
                 command = {1: 'section', 2: 'subsection', 3: 'subsubsection'}.get(level, 'paragraph')
                 # Reserve space for a following table together with its heading/caption.
-                reserve = 5
+                reserve = 16 if title == 'References' else 5
+                child_headings = 0
                 for j in range(i+3, len(tokens)):
-                    if tokens[j].type == 'heading_open': break
+                    if tokens[j].type == 'heading_open':
+                        if int(tokens[j].tag[1:]) <= level:
+                            break
+                        child_headings += 1
                     if tokens[j].type == 'table_open':
                         rows_ahead = 0
                         for future in tokens[j+1:]:
                             if future.type == 'table_close': break
                             if future.type == 'tr_open': rows_ahead += 1
-                        reserve = min(35, 2*rows_ahead+8)
+                        reserve = min(40, 1.5*rows_ahead+6+3*child_headings)
                         break
                 body.append(r'\Needspace{' + str(reserve) + r'\baselineskip}' + chr(92) + command + '{')
         elif typ == 'heading_close':
@@ -120,7 +124,7 @@ def convert(markdown):
             if columns == 2: widths = [.25, .75]
             if columns == 3: widths = [.32, .19, .49]
             spec = ''.join('p{' + str(round(.87*w, 4)) + r'\linewidth}' for w in widths)
-            body.append(r'\Needspace{' + str(min(32, 2*len(rows)+2)) + r'\baselineskip}')
+            body.append(r'\Needspace{' + str(min(32, 1.5*len(rows)+2)) + r'\baselineskip}')
             body.append(r'\begin{longtable}{' + spec + '}' + '\n' + r'\toprule')
             for n, row in enumerate(rows):
                 body.append(' & '.join(row) + r' \\')
