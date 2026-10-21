@@ -104,5 +104,5 @@ reproduce the experiment and its checks, not the exact historical timing values.
 The submission does not include the Markdown sources, figures, or compiler needed
 to rebuild the report PDF.
 
-The report revision expands the update procedures and implementation-based performance
-analysis. The original timing tables and benchmark code are unchanged.
+The report uses short explanations of update steps and performance differences.
+The original timing tables and benchmark code are unchanged.
