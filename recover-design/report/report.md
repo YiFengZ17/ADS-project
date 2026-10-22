@@ -9,7 +9,7 @@ Date: 2026-10-21
 
 ## Abstract
 
-This project recovers a fence layout from connector degrees. We connect neighboring connectors in each row and column, then use degree rules and backtracking to choose the fences. The C++17 program passes 935 local tests, including checks under AddressSanitizer and UndefinedBehaviorSanitizer. The search is complete, but its worst-case running time is exponential.
+In this project, we recover a fence layout from connector degrees. We first connect neighboring connectors in each row and column, then use degree rules to narrow the choices. Backtracking handles the choices that remain. Our C++17 program passes 935 local tests, including checks under AddressSanitizer and UndefinedBehaviorSanitizer. This approach finds a solution if one exists, although its worst-case running time is exponential.
 
 # Introduction
 
@@ -21,34 +21,34 @@ For each connector, output `row col up down left right` in row order, from left 
 
 ## Candidate Edges
 
-A vertex represents a connector. A candidate edge joins two consecutive connectors in the same row or column. Each vertex has at most four edges. A fence through several connectors is represented by several edges.
+We model the layout as a graph: each vertex represents a connector, and each candidate edge joins consecutive connectors in the same row or column. This gives each vertex at most four edges. A longer fence is simply a sequence of these edges, so we do not need separate edges that skip connectors.
 
 Let $x_e\in\{0,1\}$ show whether edge $e$ is selected. For a vertex $v$ with required degree $k_v$, require $\sum_{e\ni v}x_e=k_v$. If two edges $e$ and $f$ cross at an empty cell, require $x_e+x_f\leq1$.
 
-Row and column scans build the edges. Each edge stores its endpoints and their direction indices. Two grids record the horizontal and vertical edge through each empty cell. If both are present, add the pair to the conflict lists.
+To build this graph, we scan the rows and columns and store each edge's endpoints and direction indices. We also use two grids to record the horizontal and vertical edge through each empty cell. When both are present, the pair goes into the conflict lists.
 
 ## Propagation and Backtracking
 
-Each edge is unknown, selected or excluded. At a vertex, let $s$ count selected edges and $u$ count unknown edges. Apply these rules:
+Before branching, we use the required degrees to settle any forced choices. Each edge is unknown, selected or excluded. At a vertex, let $s$ count selected edges and $u$ count unknown edges. We then apply four rules:
 
 1. If $s>k_v$ or $s+u<k_v$, reject the branch.
 2. If $s=k_v$, exclude all remaining edges at this vertex.
 3. If $s+u=k_v$, select all remaining edges at this vertex.
 4. For each selected edge, exclude every edge that crosses it at an empty cell.
 
-Repeat until no edge changes. If unknown edges remain, choose a vertex with the fewest unknown edges and branch on one of them. Try selecting the edge first, then excluding it. A list records changed edges; after failure, undo changes back to the saved position.
+We repeat these rules until no edge changes. If some choices are still open, we pick a vertex with the fewest unknown edges and branch on one of them, trying selection before exclusion. To undo a failed choice, we record changed edges in a list and restore them back to the saved position.
 
 Stop when all edges are assigned. If both choices fail at every branch, return `No Solution`.
 
 ## Correctness Argument
 
-Split any valid fence at each connector it meets. Each segment joins consecutive connectors in a row or column, so every valid design uses only candidate edges.
+First, consider how a valid design fits our graph. Splitting a fence at each connector leaves segments between consecutive connectors in a row or column. Every segment is therefore a candidate edge, so the model does not miss any valid design.
 
-The degree rules reject a branch only when it has too many selected edges or too few possible edges. They fix an edge only when the required degree forces that choice. Excluding a crossing edge is also necessary. Thus the rules do not remove any valid completion.
+Next, the degree rules reject a branch only when it has too many selected edges or too few possible edges. They fix an edge only when the required degree forces that choice. Excluding a crossing edge is also necessary. Thus the rules do not remove any valid completion.
 
-Each unknown edge has two possible values. The search tries both and restores the parent state after a failed branch. Each recursive call fixes at least one new edge, so the search terminates. By induction on the number of unknown edges, it finds a completion if one exists.
+For choices that the rules cannot settle, each unknown edge has two possible values. The search tries both and restores the parent state after a failed branch. Each recursive call fixes at least one new edge, so the search terminates. By induction on the number of unknown edges, it finds a completion if one exists.
 
-At success, all edges are assigned and all degree and crossing checks pass. Each selected edge sets matching flags at its two endpoints. Vertices are printed in input order. The output is therefore a valid design; if both choices fail in every branch, no solution exists.
+Finally, when the search succeeds, all edges are assigned and all degree and crossing checks pass. Each selected edge sets matching flags at its two endpoints. Vertices are printed in input order. The output is therefore a valid design; if both choices fail in every branch, no solution exists.
 
 # Testing Results
 
@@ -56,7 +56,7 @@ At success, all edges are assigned and all degree and crossing checks pass. Each
 
 Tests ran on 2026-10-21 using WSL2 (Linux 6.6.87.2), an AMD Ryzen 7 H 255 CPU, GCC 13.3.0 and Python 3.13.13. The release build uses `-std=c++17 -O2 -Wall -Wextra -Wpedantic`. A separate build uses ASan and UBSan; commands are in `README.md`.
 
-The checker follows each printed direction to the next connector. It checks position, order, spacing, degree, matching endpoint flags and crossings. For small grids, a separate checker tries every candidate-edge subset to decide whether a solution exists. Three invalid outputs test rejection of wrong degrees, unmatched endpoints and crossings.
+Since a case may have several valid answers, we check the layout rather than compare output strings. The checker follows each printed direction to the next connector and checks position, order, spacing, degree, matching endpoint flags and crossings. For small grids, we also try every candidate-edge subset to check whether a solution exists. Three invalid outputs check that the validator rejects wrong degrees, unmatched endpoints and crossings.
 
 ## Correctness Tests
 
@@ -71,11 +71,11 @@ The checker follows each printed direction to the next connector. It checks posi
 
 Both builds passed all 935 cases and the three checker rejection tests. No sanitizer error was reported. Random tests use seed 17.
 
-An instrumented rerun found two valid 4 by 4 cases that each rejected one branch and recovered after one rollback, undoing 5 and 6 edge assignments. They are saved as `tests/rollback-a.in` and `tests/rollback-b.in`; run `scripts/check_rollback.py` to reproduce the counts. These are cases from the existing suite, not additional random trials. Failed searches across several levels or both choices of one branch remain untested.
+To check whether the tests exercise rollback, we reran the suite with counters. Two valid 4 by 4 cases each rejected one branch and recovered after one rollback, undoing 5 and 6 edge assignments. They are saved as `tests/rollback-a.in` and `tests/rollback-b.in`; run `scripts/check_rollback.py` to reproduce the counts. These are cases from the existing suite, not additional random trials. Failed searches across several levels or both choices of one branch remain untested.
 
 ## Timing Results
 
-All inputs are 50 by 50. Each has one warmup and ten measured runs. Times are in milliseconds and include process startup, input/output, solving and Python validation. The table gives the median and minimum--maximum range; it does not measure solver time alone.
+For timing, we use five 50 by 50 inputs, with one warmup and ten measured runs each. The table gives the median and minimum--maximum range in milliseconds. These times include process startup, input/output, solving and Python validation, so they measure the full run rather than solver time alone.
 
 | Input | Median (ms) | Range (ms) |
 | --- | --- | --- |
@@ -85,29 +85,29 @@ All inputs are 50 by 50. Each has one warmup and ten measured runs. Times are in
 | Degree 1 at both ends of each row | 2.292 | 1.932 to 2.749 |
 | Degree 4 everywhere (no solution) | 2.520 | 2.085 to 2.909 |
 
-The degree-1 grid needs branching. The full-edge grid is forced by degree rules, and the degree-4 grid fails at a corner. These cases do not cover the hardest searches. The README gives reproduction commands; local timing files are not part of the submission.
+The degree-1 grid needs branching. In contrast, degree rules settle the full-edge grid, while the degree-4 grid fails at a corner. These cases show different paths through the solver, but they do not cover the hardest searches. The README gives reproduction commands; local timing files are not part of the submission.
 
 # Analysis and Comments
 
 ## Time Complexity
 
-Let $V$ count vertices, $E$ candidate edges and $X$ crossing pairs. Each vertex has at most four edges, so $E\leq2V$. Each empty cell has at most one crossing pair, so $X\leq nm$. Candidate interiors do not overlap within one row or column. Building and marking them therefore takes $O(nm+V+E+X)$ time.
+To estimate the cost, let $V$ count vertices, $E$ candidate edges and $X$ crossing pairs. Each vertex has at most four edges, so $E\leq2V$. Each empty cell has at most one crossing pair, so $X\leq nm$. Candidate interiors do not overlap within one row or column. Building and marking them therefore takes $O(nm+V+E+X)$ time.
 
 One rule scan takes $O(V+E+X)$. Each scan that changes the state fixes at least one unknown edge, so propagation needs at most $E+1$ scans per search node. A branch fixes an edge; search depth is at most $E$, with at most $2^{E+1}-1$ nodes. Combining these bounds gives $O(nm+2^E(E+1)(V+E+X))$ worst-case time. This bound is derived from the code; the tests do not establish a better bound.
 
 ## Space Complexity
 
-The grids, edges and conflict lists use $O(nm+V+E+X)$ total space. The change list and recursion stack use $O(E)$ auxiliary space. Each branch changes the shared state instead of copying the graph.
+The grids, edges and conflict lists use $O(nm+V+E+X)$ total space. We keep one shared graph and undo changes after a failed branch, so there is no graph copy at each level. The change list and recursion stack use $O(E)$ auxiliary space.
 
 ## Limitations and Improvements
 
 1. Search time is exponential in the worst case. PTA acceptance has not been checked, and the supplied statement does not include time or memory limits.
 2. Propagation scans the whole graph. A queue of affected vertices and edges could reduce repeated work.
-3. The large tests are structured cases. Add harder sparse and nearly impossible cases to study search cost.
+3. Our large tests are structured cases. Harder sparse and nearly impossible cases would give a better picture of search cost.
 
 # Conclusion
 
-Degree rules reduce the choices, and backtracking tries the remaining ones. The method finds a valid layout if one exists, but its worst-case search time remains exponential.
+We use degree rules to reduce the choices and backtracking to try the remaining ones. Together, they give a complete search for a valid layout. The main limitation is still the exponential worst-case running time, which calls for more demanding performance tests.
 
 # Author List
 
