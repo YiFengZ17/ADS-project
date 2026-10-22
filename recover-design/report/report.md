@@ -115,6 +115,16 @@ YiFeng Zheng: code, tests, report and responses to review comments.
 
 YuJie Sun: independent reproduction and approval.
 
+# Declaration
+
+We hereby declare that all work in this project, titled “Recover the Design,” is our independent effort as a group.
+
+# Signatures
+
+YiFeng Zheng
+
+YuJie Sun
+
 # Source Code Appendix
 
 The solver is in `code/main.cpp`, the checker in `scripts/check.py`, and the sample in `tests/sample1.in`. See `README.md` for build and test commands.
