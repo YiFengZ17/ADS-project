@@ -34,12 +34,14 @@ support. Python and LaTeX are not needed to run the submitted code.
 
 Run all commands below from `TA/`.
 
+The submission contains only `code/`, this README and its report PDF. All commands write executables and data to an external temporary directory. Keep the same shell for the commands below; `echo "$ADS_RUN_DIR"` shows the output location.
+
 ## Build and smoke test
 
 ```bash
-mkdir -p build
-gcc -std=c11 -O2 -Wall -Wextra -Wpedantic code/test.c -o build/compare-trees
-./build/compare-trees --check
+ADS_RUN_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ads-p1.XXXXXX")"
+gcc -std=c11 -O2 -Wall -Wextra -Wpedantic code/test.c -o "$ADS_RUN_DIR/compare-trees"
+"$ADS_RUN_DIR/compare-trees" --check
 ```
 
 Compile only `test.c`, which includes the five tree implementations. Do not compile
@@ -51,13 +53,13 @@ reports `PASS` for all five trees. It is not an exhaustive structural-invariant 
 
 ## Optional sanitizer check
 
-After creating `build/` above, run:
+Using the same shell and `ADS_RUN_DIR` from the build step, run:
 
 ```bash
 gcc -std=c11 -O1 -g -Wall -Wextra -Wpedantic \
     -fsanitize=address,undefined -fno-omit-frame-pointer \
-    code/test.c -o build/compare-trees-sanitize
-./build/compare-trees-sanitize --check
+    code/test.c -o "$ADS_RUN_DIR/compare-trees-sanitize"
+"$ADS_RUN_DIR/compare-trees-sanitize" --check
 ```
 
 Expect five `PASS` results and no sanitizer diagnostics.
@@ -65,8 +67,8 @@ Expect five `PASS` results and no sanitizer diagnostics.
 ## Reproduce the benchmark
 
 ```bash
-mkdir -p build/inputs
-./build/compare-trees --bench build/results.csv build/inputs
+mkdir -p "$ADS_RUN_DIR/inputs"
+"$ADS_RUN_DIR/compare-trees" --bench "$ADS_RUN_DIR/results.csv" "$ADS_RUN_DIR/inputs"
 ```
 
 The driver runs all five trees at N = 1,000, 2,000, 5,000, 10,000, 20,000, 50,000,
@@ -80,7 +82,7 @@ Random inputs use Fisher-Yates shuffles driven by xorshift32. Seeds depend on N
 and the repetition number; the saved input files include the seed and both orders.
 
 Within each trial, all trees receive the same inputs. The run generates 1,050 timing
-rows in `build/results.csv` and 231 input files in `build/inputs/` (21 warmup
+rows in `$ADS_RUN_DIR/results.csv` and 231 input files in `$ADS_RUN_DIR/inputs/` (21 warmup
 inputs and 210 measured inputs). Warmups use repeat -1 and are excluded from the CSV. Trial progress is
 printed to standard error. Ordered BST runs can take several minutes because their
 total cost is quadratic. Repeating the command overwrites the generated measurements.

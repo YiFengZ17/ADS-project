@@ -60,3 +60,5 @@ make package-code    # 先运行 check，再把 code/*.c 同步到 TA/code 和 P
 同步代码后检查两个提交目录的 diff，运行 sanitizer，确认代码与报告一致，再提交。提交包自身的 README 提供独立 GCC 命令，不需要工作目录里的 Markdown 或 Python 工具。
 
 完整工作约定见根目录 `AGENT.md`，排版模板在 `../templates/report/`。
+
+TA 和 Peer Review 均只保留 `code/`、`README.md` 和对应报告 PDF。提交 README 使用外部临时目录保存可执行文件和计时输入输出；打包脚本遇到额外文件会停止，避免污染提交目录。
