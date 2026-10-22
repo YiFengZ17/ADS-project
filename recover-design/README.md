@@ -2,7 +2,7 @@
 
 Group 17。编写：YiFeng Zheng（YifengZheng）；审批：YuJie Sun（YujieSun）。当前是代码、测试和报告初稿，待独立复现审批；尚未取得 PTA 隐藏测试结果。
 
-沿用 Project 1 的目录和交付方式，题面转录见 [problem.md](problem.md)。实现为 C++17，使用度数约束传播和完整回溯搜索。最坏时间为指数级，不能仅凭本地用例通过就保证最大规模隐藏用例的性能。
+沿用 Project 1 的目录和交付方式，报告 Introduction 直接说明 PTA 题意。开发目录中的 [problem.md](problem.md) 仅留作题面记录，不进入 TA 或 Peer Review 提交包。实现为 C++17，使用度数约束传播和完整回溯搜索。最坏时间为指数级，不能仅凭本地用例通过就保证最大规模隐藏用例的性能。
 
 ## 文件
 

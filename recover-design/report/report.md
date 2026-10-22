@@ -13,9 +13,9 @@ This project recovers a fence layout from connector degrees. We connect neighbor
 
 # Introduction
 
-The input is an $n\times m$ grid, where $1<n,m\leq50$. A value from 1 to 4 gives a connector's required degree; zero means no connector. Fences are horizontal or vertical. They can turn or cross only at connectors [1].
+According to the PTA problem Recover the Design, each input contains one $n\times m$ grid, where $1<n,m\leq50$. A value from 1 to 4 gives a connector's required degree; zero means no connector. Fences are horizontal or vertical. They can turn or cross only at connectors.
 
-For each connector, output `row col up down left right` in row order, from left to right. Coordinates start at 1; direction flags are 0 or 1. Print `No Solution` if no layout exists. Any valid layout is accepted. Separate components and cycles are allowed; an empty grid produces no output.
+For each connector, output `row col up down left right` in row order, from left to right. Coordinates start at 1; direction flags are 0 or 1. Separate numbers with one space, with no leading or trailing spaces. Print `No Solution` if no layout exists. Any valid layout is accepted. Separate components and cycles are allowed; an empty grid produces no output.
 
 # Data Structure / Algorithm Specification
 
@@ -108,10 +108,6 @@ The grids, edges and conflict lists use $O(nm+V+E+X)$ total space. The change li
 # Conclusion
 
 Degree rules reduce the choices, and backtracking tries the remaining ones. The method finds a valid layout if one exists, but its worst-case search time remains exponential.
-
-# References
-
-[1] Y. Chen, *8-1 Recover the Design*, Zhejiang University, PTA assignment statement, supplied Oct. 21, 2026. Transcription: `problem.md`.
 
 # Author List
 
