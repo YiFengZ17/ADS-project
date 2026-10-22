@@ -4,8 +4,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-COMMON = [Path('Makefile'), Path('code/main.cpp'), Path('scripts/analyze.py'),
-          Path('scripts/test_parser.py')]
+COMMON = [Path('code/main.cpp')]
 PACKAGES = [
     ('TA', ROOT/'build/shortest-path-heaps.pdf', 'yds_2026G17_P2.pdf'),
     ('Peer Review', ROOT/'build/shortest-path-heaps-anonymous.pdf', 'shortest-path-heaps.pdf'),
@@ -16,6 +15,12 @@ def main():
     source = (ROOT/'report/report.md').read_bytes()
     if not source:
         raise RuntimeError('empty report source')
+    for folder, _, pdf_name in PACKAGES:
+        destination = ROOT/folder
+        extras = {p.name for p in destination.iterdir()} - {'code', 'README.md', pdf_name}
+        code_extras = {p.name for p in (destination/'code').iterdir()} - {'main.cpp'}
+        if extras or code_extras:
+            raise RuntimeError(f'Unexpected submission entries in {folder}: {sorted(extras | code_extras)}')
     for folder, pdf, pdf_name in PACKAGES:
         if not pdf.is_file():
             raise RuntimeError(f'missing checked PDF: {pdf}')
