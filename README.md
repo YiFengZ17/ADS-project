@@ -17,17 +17,20 @@ ADS/
 ├── AGENTS.md / AGENT.md    # AI 入口与项目工作约定
 ├── templates/report/      # 打包好的课程报告排版模板
 ├── compare-trees/          # 第一次实验
-└── shortest-path-heaps/    # 第二次实验：Dijkstra + 二叉堆 / Fibonacci 堆
-    ├── code/              # 日常开发代码
-    ├── report/report.md    # 报告正文
-    ├── figures/           # 报告使用的图
-    ├── TA/                # 实名提交版
-    ├── Peer Review/       # 匿名提交版
-    ├── opinion/           # 复现记录、意见和处理结果
-    ├── scripts/           # 构建与分析入口
-    ├── Makefile
-    └── build/、data/       # 本地生成，不上传 Git
+├── shortest-path-heaps/    # 第二次实验：Dijkstra + 二叉堆 / Fibonacci 堆
+│   ├── code/              # 日常开发代码
+│   ├── report/report.md    # 报告正文
+│   ├── figures/           # 报告使用的图
+│   ├── TA/                # 实名提交版
+│   ├── Peer Review/       # 匿名提交版
+│   ├── opinion/           # 复现记录、意见和处理结果
+│   ├── scripts/           # 构建与分析入口
+│   ├── Makefile
+│   └── build/、data/       # 本地生成，不上传 Git
+└── recover-design/        # 第三次实验：Recover the Design
 ```
+
+Project 3 位于 `recover-design/`（Recover the Design），沿用上述子目录；YiFeng Zheng 编写，YuJie Sun 复现审批，当前为待审批初稿。具体命令见 [Project 3 README](recover-design/README.md)。
 
 新实验沿用上面的子目录。模板用法见 `templates/report/README.md`；现有实验的依赖、运行和报告生成方法见 `compare-trees/README.md` 与 `shortest-path-heaps/README.md`。
 

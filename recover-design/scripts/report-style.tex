@@ -1,0 +1,36 @@
+\documentclass[UTF8,fontset=none,a4paper,11pt,twoside]{ctexart}
+\usepackage[left=2.5cm,right=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\newfontfamily\titlefont{TeX Gyre Termes}
+\usepackage{graphicx,longtable,booktabs,array,enumitem,needspace,listings}
+\usepackage[hidelinks]{hyperref}
+\renewcommand{\contentsname}{Contents}
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+\ctexset{
+  section = {format = \Large\bfseries\raggedright, name = {}, number = \arabic{section}},
+  subsection = {number = \thesection.\arabic{subsection}},
+  subsubsection = {indent = 0pt, number = \thesubsection.\arabic{subsubsection}}
+}
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+\setlength{\emergencystretch}{3em}
+\setlist{nosep,leftmargin=18pt,topsep=5pt}
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+\raggedbottom
+\clubpenalty=10000
+\widowpenalty=10000
+\setmainfont{Latin Modern Roman}
+\setmonofont{Latin Modern Mono}
+
+\setCJKmainfont{FandolSong-Regular.otf}
+\setCJKmonofont{FandolFang-Regular.otf}
+\renewcommand{\figurename}{Figure}
+\renewcommand{\tablename}{Table}
