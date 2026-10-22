@@ -12,8 +12,8 @@ Group 17。编写：YiFeng Zheng（YifengZheng）；审批：YuJie Sun（YujieSu
 - `scripts/check_rollback.py`：对源码的本地副本插桩，复现两个案例的失败分支及回滚计数；不改求解决策。
 - `report/report.md`：报告正文的唯一权威来源。
 - `scripts/build_report.py`、`scripts/report-style.tex`：复用 Project 1 构建器与仓库模板样式，支持单独生成匿名版。
-- `TA/`：实名报告 `yds_2026G17_P3.pdf`、代码及复现工具快照。
-- `Peer Review/`：匿名报告 `recover-design.pdf`、代码及复现工具快照。
+- `TA/`：实名报告 `yds_2026G17_P3.pdf`、`code/` 和 `README.md`。
+- `Peer Review/`：匿名报告 `recover-design.pdf`、`code/` 和 `README.md`。
 - `opinion/`：实际复现记录和审批意见。
 - `build/`、`data/`、`qa/`：本地输出，不提交。
 
@@ -52,7 +52,7 @@ Python 依赖可在虚拟环境内用 `python -m pip install -r requirements.txt
 
 检查 PDF 内容、目录、分页及匿名信息后，才更新 `TA/yds_2026G17_P3.pdf` 与 `Peer Review/recover-design.pdf`。现有两个 PDF 都是经过文风精简和模拟 TA 复审、已检查排版的初稿，报告中的声明、签名和审批仍待成员确认。
 
-`make package-code` 先运行正确性检查，再同步源码、检查器、样例和提交目录 README。提交包可依照各自 README 独立编译和复现，不依赖开发目录的 Markdown 构建环境。
+`make package-code` 先运行正确性检查，再仅同步 `code/main.cpp` 和提交目录 README，保留现有 PDF。打包脚本拒绝白名单之外的文件。提交包可按 README 独立编译和运行小型检查，输出写入外部临时目录；完整测试、回滚检查和计时脚本仅在开发目录中运行。报告中出现的 `scripts/`、`tests/` 路径指开发目录，不是提交包内容。
 
 YuJie Sun 的审批流程及记录要求见 [opinion/README.md](opinion/README.md)。
 
