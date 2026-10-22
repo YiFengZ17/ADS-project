@@ -141,8 +141,15 @@ def main():
     tex = OUT / ('report-anonymous.tex' if args.anonymous else 'report-from-md.tex')
     markdown = original.decode()
     if args.anonymous:
-        markdown = markdown.replace('YiFeng Zheng', 'Author').replace('YuJie Sun', 'Reviewer')
-        markdown = markdown.replace('Group number: 17', 'Group number: withheld')
+        # Omit identity fields and sections instead of printing anonymous placeholders.
+        sections = re.split(r'(?=^# )', markdown, flags=re.MULTILINE)
+        omitted = {'Author List', 'Division of Work', 'Declaration', 'Signatures'}
+        markdown = ''.join(section for section in sections
+                           if not section or section.splitlines()[0].removeprefix('# ').strip() not in omitted)
+        markdown = re.sub(r'^(?:Author|Reviewer|Group number):[^\n]*\n?', '',
+                          markdown, flags=re.MULTILINE)
+        if any(name in markdown for name in ('YiFeng Zheng', 'YuJie Sun')):
+            raise ValueError('Identity remains outside the omitted sections')
     style = (ROOT / 'scripts/report-style.tex').read_text()
     tex.write_text(style + '\n' + r'\begin{document}' + '\n' + convert(markdown) + '\n' + r'\end{document}' + '\n')
     if args.compile:

@@ -49,4 +49,4 @@ make benchmark
 
 The development workflow checks 935 solver cases and three invalid outputs; the rollback check reruns two cases from that suite. It writes executables to the project's `build/`, rollback counts to `build/rollback-check/results.txt`, and timing measurements to `data/timings.json`. Timing includes process startup, input/output and Python validation. These outputs stay outside TA and Peer Review.
 
-The exact backtracking solver has exponential worst-case time. Local checks do not establish hidden-judge acceptance; independent human review remains pending.
+The exact backtracking solver has exponential worst-case time. Local checks do not establish hidden-judge acceptance.

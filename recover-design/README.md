@@ -50,7 +50,7 @@ Python 依赖可在虚拟环境内用 `python -m pip install -r requirements.txt
 
 实名和匿名 PDF 分别生成在 `build/recover-design.pdf`、`build/recover-design-anonymous.pdf`；对应 LaTeX 在 `build/md-report/report-from-md.tex`、`report-anonymous.tex`，编译日志在同目录 `compile.log` 和 `compile-anonymous.log`。构建器不修改 Markdown，也不覆盖提交 PDF。
 
-检查 PDF 内容、目录、分页及匿名信息后，才更新 `TA/yds_2026G17_P3.pdf` 与 `Peer Review/recover-design.pdf`。现有两个 PDF 都是经过文风精简和模拟 TA 复审、已检查排版的初稿，报告中的声明、签名和审批仍待成员确认。
+检查 PDF 内容、目录、分页及匿名信息后，才更新 `TA/yds_2026G17_P3.pdf` 与 `Peer Review/recover-design.pdf`。现有两个 PDF 已完成文风精简、模拟 TA 复审和排版检查。提交报告不显示待确认占位文字；匿名版直接省略封面身份字段及作者分工等身份章节。真实审批状态保留在 `opinion/`，删除占位文字不代表审批已完成。
 
 `make package-code` 先运行正确性检查，再仅同步 `code/main.cpp` 和提交目录 README，保留现有 PDF。打包脚本拒绝白名单之外的文件。提交包可按 README 独立编译和运行小型检查，输出写入外部临时目录；完整测试、回滚检查和计时脚本仅在开发目录中运行。报告中出现的 `scripts/`、`tests/` 路径指开发目录，不是提交包内容。
 

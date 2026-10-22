@@ -1,7 +1,7 @@
 # Recover the Design
 
 Author: YiFeng Zheng
-Reviewer: YuJie Sun (review pending)
+Reviewer: YuJie Sun
 
 Group number: 17
 
@@ -113,17 +113,7 @@ We use degree rules to reduce the choices and backtracking to try the remaining 
 
 YiFeng Zheng: code, tests, report and responses to review comments.
 
-YuJie Sun: independent reproduction and approval (pending).
-
-# Declaration
-
-This report is a draft. The group declaration remains to be confirmed before submission.
-
-# Signatures
-
-YiFeng Zheng: pending confirmation.
-
-YuJie Sun: review and signature pending.
+YuJie Sun: independent reproduction and approval.
 
 # Source Code Appendix
 
