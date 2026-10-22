@@ -9,124 +9,119 @@ Date: 2026-10-21
 
 ## Abstract
 
-This project restores an axis-aligned fence layout from connector degrees. We build candidate segments between consecutive connectors, forbid crossings at empty positions, and solve the resulting binary constraints by propagation and exhaustive backtracking. The C++17 implementation passes 935 local cases and the same suite under AddressSanitizer and UndefinedBehaviorSanitizer. The method is exact but has exponential worst-case time. This is a first draft; independent review and hidden-judge acceptance remain pending.
+This project recovers a fence layout from connector degrees. We connect neighboring connectors in each row and column, then use degree rules and backtracking to choose the fences. The C++17 program passes 935 local tests, including checks under AddressSanitizer and UndefinedBehaviorSanitizer. The search is complete, but its worst-case running time is exponential.
 
 # Introduction
 
-The input is an $n \times m$ grid, where $1<n,m\leq50$. A positive entry specifies a connector degree from 1 to 4; zero means no connector. Fences must be horizontal or vertical. Turns and intersections require connectors [1]. The output gives each connector's row, column, and four direction flags, in row-major order. If no design exists, the program prints `No Solution`.
+The input is an $n\times m$ grid, where $1<n,m\leq50$. A value from 1 to 4 gives a connector's required degree; zero means no connector. Fences are horizontal or vertical. They can turn or cross only at connectors [1].
 
-There is no global connectivity requirement in the supplied statement. Separate components and cycles are allowed. A fence may continue straight through a connector by using two opposite directions. An all-zero grid has an empty valid output. The supplied screenshots do not show time or memory limits, and the sample output is truncated; we validate solutions geometrically instead of comparing output strings.
+For each connector, output `row col up down left right` in row order, from left to right. Coordinates start at 1; direction flags are 0 or 1. Print `No Solution` if no layout exists. Any valid layout is accepted. Separate components and cycles are allowed; an empty grid produces no output.
 
 # Data Structure / Algorithm Specification
 
-## Candidate Segments and Constraints
+## Candidate Edges
 
-Create one vertex for each nonzero grid position. In each row and column, connect consecutive vertices by a candidate edge. A more distant connector cannot be reached in one segment without passing another connector; such a fence is represented by multiple consecutive edges. Each vertex has at most four candidates. Each edge stores its endpoints and their corresponding direction indices.
+A vertex represents a connector. A candidate edge joins two consecutive connectors in the same row or column. Each vertex has at most four edges. A fence through several connectors is represented by several edges.
 
-For each candidate edge $e$, let $x_e\in\{0,1\}$ indicate whether it is selected. At vertex $v$, the requirement is $\sum_{e\ni v}x_e=k_v$. For horizontal and vertical candidates whose interiors intersect at a zero cell, require $x_e+x_f\leq1$. These constraints encode the full task: endpoints are connectors, segments are straight, degrees are exact, and empty-cell crossings are forbidden.
+Let $x_e\in\{0,1\}$ show whether edge $e$ is selected. For a vertex $v$ with required degree $k_v$, require $\sum_{e\ni v}x_e=k_v$. If two edges $e$ and $f$ cross at an empty cell, require $x_e+x_f\leq1$.
 
-Row and column scans build the edges. Two temporary grids record the horizontal and vertical edge crossing each empty cell. If both are present, record a conflict. Each empty cell belongs to at most one horizontal and one vertical candidate interior.
+Row and column scans build the edges. Each edge stores its endpoints and their direction indices. Two grids record the horizontal and vertical edge through each empty cell. If both are present, add the pair to the conflict lists.
 
-## Propagation and Search
+## Propagation and Backtracking
 
-The state of each edge is unknown, excluded or selected. For each vertex, count selected edges $s$ and unknown edges $u$. Reject the state if $s>k_v$ or $s+u<k_v$. If $s=k_v$, exclude all unknown incident edges. If $s+u=k_v$, select all unknown incident edges. Selected edges exclude every conflicting edge. Repeat full scans until no state changes.
+Each edge is unknown, selected or excluded. At a vertex, let $s$ count selected edges and $u$ count unknown edges. Apply these rules:
 
-If unknown edges remain, choose a vertex with the fewest unknown incident edges and branch on one of those edges. Try selection, then exclusion. A trail stores every newly assigned edge. After a failed recursive call, restore all entries after the saved trail boundary. This avoids copying the entire state at each branch.
+1. If $s>k_v$ or $s+u<k_v$, reject the branch.
+2. If $s=k_v$, exclude all remaining edges at this vertex.
+3. If $s+u=k_v$, select all remaining edges at this vertex.
+4. For each selected edge, exclude every edge that crosses it at an empty cell.
 
-```text
-search:
-    propagate degree and crossing constraints
-    if contradiction: return failure
-    if every edge is assigned: return success
-    choose an unknown edge at a most-constrained vertex
-    save the trail boundary
-    for value in [selected, excluded]:
-        assign the edge
-        if search succeeds: return success
-        roll back to the saved boundary
-    return failure
-```
+Repeat until no edge changes. If unknown edges remain, choose a vertex with the fewest unknown edges and branch on one of them. Try selecting the edge first, then excluding it. A list records changed edges; after failure, undo changes back to the saved position.
 
-## Correctness
+Stop when all edges are assigned. If both choices fail at every branch, return `No Solution`.
 
-Candidate completeness: split every valid fence at each encountered connector. Each resulting segment joins consecutive connectors in one row or column, and therefore appears in the candidate list. Conversely, each candidate is a straight segment with no connector in its interior.
+## Correctness Argument
 
-Propagation safety: the two failure inequalities mean that a degree cannot be met. If the required degree is already reached, every remaining edge must be excluded. If all unknown edges are needed to reach that degree, every one must be selected. A selected edge's crossing conflicts must be excluded. Thus each propagation step preserves every possible completion of the current branch.
+Split any valid fence at each connector it meets. Each segment joins consecutive connectors in a row or column, so every valid design uses only candidate edges.
 
-Search completeness: a chosen unknown edge has exactly two possible values, and the search explores both. Rollback restores precisely the parent assignment, including changes made during propagation. Each recursive step fixes at least one new edge, so every branch terminates. By induction on the number of unknown edges, failure means neither value has a feasible completion.
+The degree rules reject a branch only when it has too many selected edges or too few possible edges. They fix an edge only when the required degree forces that choice. Excluding a crossing edge is also necessary. Thus the rules do not remove any valid completion.
 
-Output soundness: a successful leaf has no unknown edges and has passed all degree and crossing checks. Its selected segments therefore satisfy every stated rule. Endpoint direction flags are generated from the same selected edge, so they agree at both ends. Vertices are stored in input order, giving the required output order. Together these arguments show that the program prints a valid design exactly when one exists, subject to sufficient execution resources.
+Each unknown edge has two possible values. The search tries both and restores the parent state after a failed branch. Each recursive call fixes at least one new edge, so the search terminates. By induction on the number of unknown edges, it finds a completion if one exists.
+
+At success, all edges are assigned and all degree and crossing checks pass. Each selected edge sets matching flags at its two endpoints. Vertices are printed in input order. The output is therefore a valid design; if both choices fail in every branch, no solution exists.
 
 # Testing Results
 
-## Environment and Methodology
+## Environment and Method
 
-Local runs were performed on 2026-10-21 using Linux 6.6.87.2-microsoft-standard-WSL2, an AMD Ryzen 7 H 255 processor, GCC 13.3.0 and Python 3.13.13. The optimized executable uses C++17 and `-O2 -Wall -Wextra -Wpedantic`. The sanitizer build uses `-O1 -g`, AddressSanitizer and UndefinedBehaviorSanitizer, with frame pointers and non-PIE linking.
+Tests ran on 2026-10-21 using WSL2 (Linux 6.6.87.2), an AMD Ryzen 7 H 255 CPU, GCC 13.3.0 and Python 3.13.13. The release build uses `-std=c++17 -O2 -Wall -Wextra -Wpedantic`. A separate build uses ASan and UBSan; commands are in `README.md`.
 
-The Python checker independently traces each printed direction to the first connector. It checks coordinates, order, spacing, degree totals, reciprocal flags, boundaries and empty-cell crossings. For small inputs, a separate oracle constructs candidate pairs geometrically and enumerates every edge subset. This oracle checks both false positive solutions and incorrect `No Solution` results. Three deliberately invalid outputs also test the validator's rejection behavior.
+The checker follows each printed direction to the next connector. It checks position, order, spacing, degree, matching endpoint flags and crossings. For small grids, a separate checker tries every candidate-edge subset to decide whether a solution exists. Three invalid outputs test rejection of wrong degrees, unmatched endpoints and crossings.
 
-## Correctness Results
+## Correctness Tests
 
-| Case family | Cases | Observed result |
+| Test case | Count | Expected / actual result |
 | --- | --- | --- |
-| Supplied sample input | 1 | Valid recovered design |
-| Every 2 by 2 grid with entries 0 to 4 | 625 | Agreement with exhaustive oracle |
-| Seeded random 3 by 3 grids | 200 | Agreement with exhaustive oracle |
-| Crossing, junction, multiple-solution and straight-through cases | 4 | All expected outcomes |
-| Planted valid 4 by 4 designs | 100 | All recovered designs valid |
-| Structured 50 by 50 boundary cases | 5 | All expected outcomes |
+| Supplied sample | 1 | Valid design; PASS |
+| All 2 by 2 grids with entries 0 to 4 | 625 | Match exhaustive check; PASS |
+| Random 3 by 3 grids | 200 | Match exhaustive check; PASS |
+| Crossing, junction, multiple solutions and straight-through cases | 4 | Expected outcomes; PASS |
+| Generated valid 4 by 4 designs | 100 | Valid designs; PASS |
+| Structured 50 by 50 grids | 5 | Expected outcomes; PASS |
 
-The optimized build and the sanitizer build each passed all 935 solver cases and all three validator rejection checks. No sanitizer diagnostic was observed. Random generation uses seed 17. These checks are local evidence, not independent reviewer approval or PTA acceptance.
+Both builds passed all 935 cases and the three checker rejection tests. No sanitizer error was reported. Random tests use seed 17.
+
+An instrumented rerun found two valid 4 by 4 cases that each rejected one branch and recovered after one rollback, undoing 5 and 6 edge assignments. They are saved as `tests/rollback-a.in` and `tests/rollback-b.in`; run `scripts/check_rollback.py` to reproduce the counts. These are cases from the existing suite, not additional random trials. Failed searches across several levels or both choices of one branch remain untested.
 
 ## Timing Results
 
-Each structured 50 by 50 input has one warmup run followed by ten measured runs. The table reports milliseconds for the entire Python wrapper interval: process startup, input transfer, solving, output transfer, and Python validation. These are not isolated algorithm CPU times. Benchmarking was repeated after the sanitizer run finished; the table uses that later run.
+All inputs are 50 by 50. Each has one warmup and ten measured runs. Times are in milliseconds and include process startup, input/output, solving and Python validation. The table gives the median and minimum--maximum range; it does not measure solver time alone.
 
-| Input | Median (ms) | Minimum to maximum (ms) |
+| Input | Median (ms) | Range (ms) |
 | --- | --- | --- |
 | Empty grid | 1.868 | 1.392 to 2.131 |
-| Degree 1 at every position | 41.276 | 38.732 to 42.976 |
-| Full grid with all neighboring segments required | 8.283 | 7.785 to 10.294 |
+| Degree 1 everywhere | 41.276 | 38.732 to 42.976 |
+| All neighboring edges required | 8.283 | 7.785 to 10.294 |
 | Degree 1 at both ends of each row | 2.292 | 1.932 to 2.749 |
-| Impossible degree 4 at every position | 2.520 | 2.085 to 2.909 |
+| Degree 4 everywhere (no solution) | 2.520 | 2.085 to 2.909 |
 
-All five inputs have known expected feasibility. The degree-1 grid admits many matchings and exercises branching. The full-neighbor grid forces every edge; the degree-4 grid fails at a corner. These structured cases do not measure the most difficult ambiguous or infeasible search instances. Local timing records are generated by the reproduction command and are not included in the submission bundle.
+The degree-1 grid needs branching. The full-edge grid is forced by degree rules, and the degree-4 grid fails at a corner. These cases do not cover the hardest searches. The README gives reproduction commands; local timing files are not part of the submission.
 
 # Analysis and Comments
 
 ## Time Complexity
 
-Let $V$ be the connector count, $E$ the candidate count and $X$ the number of crossing pairs. Since each connector has at most four candidates, $E\leq2V$. Since each empty cell contributes at most one crossing pair, $X\leq nm$. Building the model takes $O(nm+V+E+X)$ time: the candidate interiors within each row or column are disjoint, so their total marking work is linear in the grid area.
+Let $V$ count vertices, $E$ candidate edges and $X$ crossing pairs. Each vertex has at most four edges, so $E\leq2V$. Each empty cell has at most one crossing pair, so $X\leq nm$. Candidate interiors do not overlap within one row or column. Building and marking them therefore takes $O(nm+V+E+X)$ time.
 
-One propagation scan takes $O(V+E+X)$. Every nonfinal successful scan fixes at least one previously unknown edge, so a propagation call uses at most $E+1$ scans. Each branch fixes an unknown edge, giving at most $2^{E+1}-1$ nodes in a full binary search tree. A conservative worst-case bound is therefore $O(nm+2^E(E+1)(V+E+X))$. These bounds follow directly from this implementation and the preceding counting arguments; they do not imply polynomial running time on all allowed inputs.
+One rule scan takes $O(V+E+X)$. Each scan that changes the state fixes at least one unknown edge, so propagation needs at most $E+1$ scans per search node. A branch fixes an edge; search depth is at most $E$, with at most $2^{E+1}-1$ nodes. Combining these bounds gives $O(nm+2^E(E+1)(V+E+X))$ worst-case time. This bound is derived from the code; the tests do not establish a better bound.
 
 ## Space Complexity
 
-The grid, graph and conflict lists use $O(nm+V+E+X)$ total space. The assignment trail holds at most $E$ entries along the active search path, and recursive search depth is at most $E+1$. Updates and rollback therefore need $O(E)$ auxiliary space. No full graph copy is made per recursive level.
+The grids, edges and conflict lists use $O(nm+V+E+X)$ total space. The change list and recursion stack use $O(E)$ auxiliary space. Each branch changes the shared state instead of copying the graph.
 
 ## Limitations and Improvements
 
-1. Backtracking has exponential worst-case time. Add harder adversarial cases and obtain actual PTA time and memory limits before treating this draft as judge-ready.
-2. Propagation rescans the full model. A queue of affected vertices and conflicts could avoid repeated work; this optimization has not been implemented or benchmarked.
-3. The current performance study covers five structured maximum-size cases. Broader sparse, dense and near-infeasible cases are needed to characterize practical search cost.
+1. Search time is exponential in the worst case. PTA acceptance has not been checked, and the supplied statement does not include time or memory limits.
+2. Propagation scans the whole graph. A queue of affected vertices and edges could reduce repeated work.
+3. The large tests are structured cases. Add harder sparse and nearly impossible cases to study search cost.
 
 # Conclusion
 
-The implementation models the geometric restrictions explicitly and recovers valid layouts on the supplied sample and the local test suite. An independent exhaustive oracle supports small-instance correctness, and sanitizer checks found no memory or undefined-behavior errors in the tested cases. Independent review and hidden-judge evaluation remain outstanding.
+Degree rules reduce the choices, and backtracking tries the remaining ones. The method finds a valid layout if one exists, but its worst-case search time remains exponential.
 
 # References
 
-[1] Y. Chen, “8-1 Recover the Design,” Zhejiang University, PTA assignment statement, screenshots supplied by the user, Oct. 21, 2026. Local transcription: `problem.md`. The screenshots are the source for the task requirements; the correctness and complexity arguments above are derived for this implementation.
+[1] Y. Chen, *8-1 Recover the Design*, Zhejiang University, PTA assignment statement, supplied Oct. 21, 2026. Transcription: `problem.md`.
 
 # Author List
 
-YiFeng Zheng is responsible for code, tests, report preparation and responses to review comments.
+YiFeng Zheng: code, tests, report and responses to review comments.
 
-YuJie Sun is responsible for independent reproduction and approval. This role assignment does not indicate that review has occurred.
+YuJie Sun: independent reproduction and approval (pending).
 
 # Declaration
 
-This draft records the current implementation and local checks for “Recover the Design.” The final course declaration must be confirmed by the group before final submission.
+This report is a draft. The group declaration remains to be confirmed before submission.
 
 # Signatures
 
@@ -136,4 +131,4 @@ YuJie Sun: review and signature pending.
 
 # Source Code Appendix
 
-The complete solver is provided in the accompanying `code/main.cpp`. The independent checker is in `scripts/check.py`, and the supplied sample input is in `tests/sample1.in`. Build and reproduction commands are listed in the accompanying README.
+The solver is in `code/main.cpp`, the checker in `scripts/check.py`, and the sample in `tests/sample1.in`. See `README.md` for build and test commands.

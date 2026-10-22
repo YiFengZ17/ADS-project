@@ -74,21 +74,8 @@ def convert(markdown):
                     before_body = False
                 level = int(t.tag[1:])
                 command = {1: 'section', 2: 'subsection', 3: 'subsubsection'}.get(level, 'paragraph')
-                # Reserve space for a following table together with its heading/caption.
-                reserve = {'References': 16, 'Declaration': 8}.get(title, 5)
-                child_headings = 0
-                for j in range(i+3, len(tokens)):
-                    if tokens[j].type == 'heading_open':
-                        if int(tokens[j].tag[1:]) <= level:
-                            break
-                        child_headings += 1
-                    if tokens[j].type == 'table_open':
-                        rows_ahead = 0
-                        for future in tokens[j+1:]:
-                            if future.type == 'table_close': break
-                            if future.type == 'tr_open': rows_ahead += 1
-                        reserve = min(40, 1.5*rows_ahead+6+3*child_headings)
-                        break
+                # Keep a heading with its first lines; tables reserve their own space.
+                reserve = {'Correctness Tests': 23, 'Timing Results': 23, 'Limitations and Improvements': 12}.get(title, 5)
                 body.append(r'\Needspace{' + str(reserve) + r'\baselineskip}' + chr(92) + command + '{')
         elif typ == 'heading_close':
             # Cover title and abstract are centered and unnumbered.
@@ -136,6 +123,7 @@ def convert(markdown):
         elif typ in ('thead_open','thead_close','tbody_open','tbody_close','th_open','th_close','td_open','td_close'): pass
         elif typ in ('fence', 'code_block'):
             if r'\end{lstlisting}' in t.content: raise ValueError('Invalid listing terminator')
+            body.append(r'\Needspace{' + str(min(28, len(t.content.splitlines()) + 2)) + r'\baselineskip}')
             body.append(r'\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true]' + '\n' + t.content + r'\end{lstlisting}')
         elif typ == 'hr': body.append(r'\par\noindent\rule{\linewidth}{0.4pt}')
         elif typ == 'blockquote_open': body.append(r'\begin{quote}')
