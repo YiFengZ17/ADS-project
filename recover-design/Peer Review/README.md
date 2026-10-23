@@ -1,6 +1,6 @@
 # Recover the Design — submission snapshot
 
-This bundle contains only `code/main.cpp`, this README and one report PDF: `yds_2026G17_P3.pdf` in TA, or `recover-design.pdf` in Peer Review. Use Linux / WSL and a C++17 compiler. Run the commands below from the submission directory, keeping the same shell. All generated files go to an external temporary directory.
+This bundle contains only `code/main.cpp`, this README and one report PDF in this directory. Use Linux / WSL and a C++17 compiler. Run the commands below from the submission directory, keeping the same shell. All generated files go to an external temporary directory.
 
 ## Build and run the sample
 

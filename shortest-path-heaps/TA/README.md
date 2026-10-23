@@ -1,6 +1,6 @@
 # Project 2 reproduction
 
-This bundle contains only `code/main.cpp`, this README and one report PDF: `yds_2026G17_P2.pdf` in TA, or `shortest-path-heaps.pdf` in Peer Review. Run the commands below from the submission directory on Linux / WSL with a C++17 compiler. All generated files go to an external temporary directory; keep the same shell for all steps.
+This bundle contains only `code/main.cpp`, this README and one report PDF in this directory. Run the commands below from the submission directory on Linux / WSL with a C++17 compiler. All generated files go to an external temporary directory; keep the same shell for all steps.
 
 ## Build and correctness check
 
