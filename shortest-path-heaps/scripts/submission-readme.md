@@ -28,11 +28,19 @@ Obtain the NY, BAY and COL distance graphs from the 9th DIMACS distance graph co
 ```bash
 for region in NY BAY COL; do
   "$ADS_RUN_DIR/benchmark" --validate "$ADS_RUN_DIR/$region.gr"
-  "$ADS_RUN_DIR/benchmark" "$ADS_RUN_DIR/$region.gr" 1000 20261016 > "$ADS_RUN_DIR/results-$region.csv"
+  "$ADS_RUN_DIR/benchmark" "$ADS_RUN_DIR/$region.gr" 1000 20261016 --repeat 3 > "$ADS_RUN_DIR/results-$region.csv"
 done
 ```
 
-Each CSV records 1,000 matching source-target queries for each heap, with distances and seconds per query. A distance mismatch causes failure. These are new local results, not the historical measurements in the PDF.
+Each CSV records 1,000 matching source-target queries for each heap, with distances and seconds per query. A distance mismatch causes failure. These are new local results, not the historical measurements in the PDF. The `--repeat 3` option times every query three times and keeps the median, so a single unlucky scheduling or paging event does not dominate one query.
+
+## Attribute the difference between the queues
+
+```bash
+"$ADS_RUN_DIR/benchmark" --attribute "$ADS_RUN_DIR/NY.gr" 1000 --repeat 3
+```
+
+This mode separates per-query initialization from the search itself, counts the work each queue performs, and adds an indexed binary heap as a third reference point. It prints the split between the two parts, the per-queue operation counts, and the three-way comparison.
 
 ## Development-only tools
 
