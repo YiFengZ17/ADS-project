@@ -235,9 +235,9 @@ This Project 2 submission is presented by Group 17. The report states the algori
 
 # Signatures
 
-YiFeng Zheng (typed name)
+YiFeng Zheng
 
-YuJie Sun (typed name)
+YuJie Sun
 
 # Source Code Appendix
 
