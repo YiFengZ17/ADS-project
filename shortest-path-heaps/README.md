@@ -2,6 +2,8 @@
 
 This project compares Dijkstra's algorithm with a lazy binary heap and a Fibonacci heap. Source code is `code/main.cpp`; the report source is `report/report.md`. `figures/` contains the report plot. `TA/` contains the named submission, and `Peer Review/` contains the anonymous submission. Local `data/` and `build/` are ignored by Git.
 
+课程评分要求见 [Grading Policy and Rubric](grading-policy.md)：包含 20 分 Grading Policy、六项评分细则及各项扣分条件。后续代码、测试、报告及提交包审核应按此完整细则核对；`opinion/` 中的历史模拟评分不代表已按新补充的细则重新审核。
+
 The three graph input links are listed in `report/report.md`; download `NY`, `BAY`, and `COL` from the 9th DIMACS distance graph collection. From this directory, run:
 
 ```sh
