@@ -1,62 +1,71 @@
-"""Reproduce the two failed-branch cases found in the existing seeded test suite."""
+"""Check learning, backtracking and restarts on a temporary instrumented solver."""
 import os
 from pathlib import Path
 import shlex
 import subprocess
-from check import validate
+from check import encode, planted, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def replace_once(source, old, new):
-    """Fail on source drift rather than silently producing misleading counters."""
+    """Reject stale instrumentation markers instead of reporting false coverage."""
     if source.count(old) != 1:
         raise ValueError('Instrumentation marker changed: ' + old)
     return source.replace(old, new, 1)
 
 
 def main():
-    """Compile a local instrumented copy and verify results and rollback counts."""
+    """Instrument a copy, check legal outputs, and require actual learned backtracking."""
     source = (ROOT / 'code/main.cpp').read_text()
     source = replace_once(source, 'using namespace std;', '''using namespace std;
-static long long audit_calls = 0, audit_failures = 0, audit_rollbacks = 0, audit_undone = 0;
+static long long audit_conflicts = 0, audit_learned = 0, audit_backtracks = 0;
+static long long audit_undone = 0, audit_jumps = 0, audit_restarts = 0;
 struct AuditStats {
     ~AuditStats() {
-        cerr << "ROLLBACK_STATS " << audit_calls << ' ' << audit_failures << ' '
-             << audit_rollbacks << ' ' << audit_undone << '\\n';
+        cerr << "SEARCH_STATS " << audit_conflicts << ' ' << audit_learned << ' '
+             << audit_backtracks << ' ' << audit_undone << ' ' << audit_jumps << ' '
+             << audit_restarts << '\\n';
     }
 } audit_stats;''')
-    source = replace_once(source, 'void rollback(size_t mark) {',
-                          'void rollback(size_t mark) { ++audit_rollbacks;')
-    source = replace_once(source, 'while (trail.size() > mark) {',
-                          'while (trail.size() > mark) { ++audit_undone;')
-    source = replace_once(source, 'bool search() {', 'bool search() { ++audit_calls;')
-    source = replace_once(source, 'if (!propagate()) return false;',
-                          'if (!propagate()) { ++audit_failures; return false; }')
+    for old, new in [
+        ('if (conflict >= 0) {', 'if (conflict >= 0) { ++audit_conflicts;'),
+        ('vector<int> learned = analyze(conflict, back_level);',
+         'vector<int> learned = analyze(conflict, back_level); ++audit_learned;'),
+        ('size_t mark = boundaries[level];',
+         '++audit_backtracks; audit_jumps += ((int)boundaries.size() - level > 1);\n        size_t mark = boundaries[level]; audit_undone += trail.size() - mark;'),
+        ('backtrack(0); conflicts_since_restart = 0;',
+         '++audit_restarts; backtrack(0); conflicts_since_restart = 0;'),
+    ]:
+        source = replace_once(source, old, new)
     out = ROOT / 'build/rollback-check'
     out.mkdir(parents=True, exist_ok=True)
-    instrumented = out / 'instrumented.cpp'
-    instrumented.write_text(source)
+    instrumented = out / 'instrumented.cpp'; instrumented.write_text(source)
     binary = out / 'instrumented'
-    compiler = shlex.split(os.environ.get('CXX', 'g++'))
+    compiler = shlex.split(os.environ.get('CXX', 'c++'))
     subprocess.run(compiler + ['-std=c++17', '-O2', '-Wall', '-Wextra', '-Wpedantic',
                               str(instrumented), '-o', str(binary)], check=True, timeout=30)
-    rows = []
-    for name, expected in [('rollback-a', [4, 1, 1, 5]), ('rollback-b', [4, 1, 1, 6])]:
-        data = (ROOT / 'tests' / (name + '.in')).read_text()
-        values = list(map(int, data.split())); n, m = values[:2]
-        grid = [values[2+r*m:2+(r+1)*m] for r in range(n)]
-        run = subprocess.run([str(binary)], input=data, text=True, capture_output=True, timeout=3)
-        assert run.returncode == 0, run.stderr
-        validate(grid, run.stdout, True)
-        fields = run.stderr.split()
-        assert fields and fields[0] == 'ROLLBACK_STATS', run.stderr
+    cases = []
+    for name in ('rollback-a', 'rollback-b'):
+        values = list(map(int, (ROOT / 'tests' / (name + '.in')).read_text().split()))
+        n, m = values[:2]
+        cases.append((name, [values[2+r*m:2+(r+1)*m] for r in range(n)]))
+    cases.append(('learning-50', planted(50, 1.0, 17)))
+    rows = ['Counts: conflicts, learned clauses, backtracks, undone assignments, multi-level jumps, restarts']
+    for name, grid in cases:
+        result = subprocess.run([str(binary)], input=encode(grid), text=True,
+                                capture_output=True, timeout=3)
+        assert result.returncode == 0, result.stderr
+        validate(grid, result.stdout, True)
+        fields = result.stderr.split()
+        assert fields[0] == 'SEARCH_STATS' and len(fields) == 7, result.stderr
         counts = list(map(int, fields[1:]))
-        assert counts == expected, (name, counts, expected)
-        rows.append(name + ': calls, propagation failures, rollbacks, undone edges = ' + str(counts))
-    result = '\n'.join(rows) + '\nPASS: 2 existing-suite rollback cases\n'
-    (out / 'results.txt').write_text(result)
-    print(result, end='')
+        if name == 'learning-50':
+            assert all(count > 0 for count in counts), counts
+        rows.append(f'{name}: {counts}')
+    rows.append('PASS: 3 search-path cases')
+    text = '\n'.join(rows) + '\n'
+    (out / 'results.txt').write_text(text); print(text, end='')
 
 
 if __name__ == '__main__':

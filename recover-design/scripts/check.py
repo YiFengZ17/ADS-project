@@ -79,10 +79,10 @@ def validate(grid, output, expected):
             assert flags[s, d][direction ^ 1] == 1, 'nonreciprocal connection'
 
 
-def run(binary, grid, expected):
+def run(binary, grid, expected, timeout=15):
     """Run one solver process with a timeout and validate its output."""
     start = time.perf_counter()
-    result = subprocess.run([str(binary)], input=encode(grid), text=True, capture_output=True, timeout=15)
+    result = subprocess.run([str(binary)], input=encode(grid), text=True, capture_output=True, timeout=timeout)
     assert result.returncode == 0, result.stderr
     assert not result.stderr, result.stderr
     validate(grid, result.stdout, expected)
@@ -101,21 +101,98 @@ def large_cases():
     }
 
 
+def regression_cases():
+    """Exercise global infeasibility and protect long edges and odd candidate cycles."""
+    cases = {}
+    for n in (9, 49):
+        cases[f'odd_degree_{n}'] = ([[1] * n for _ in range(n)], False)
+    for n in (10, 50):
+        grid = [[1] * n for _ in range(n)]
+        grid[0][0] = grid[0][2] = 2
+        cases[f'bipartite_imbalance_{n}'] = (grid, False)
+    # Two odd components give an even global sum, but neither can be completed.
+    grid = [[0] * 20 for _ in range(20)]
+    for offset in (0, 11):
+        for r in range(offset, offset + 9):
+            for c in range(offset, offset + 9):
+                grid[r][c] = 1
+    cases['separate_odd_components'] = (grid, False)
+    # Horizontal pairs plus one vertical edge give an explicit feasible design.
+    grid = [[1] * 50 for _ in range(50)]
+    grid[0][0] = grid[1][0] = 2
+    cases['balanced_feasible_50'] = (grid, True)
+    cases['long_same_coordinate_color'] = ([[1, 0, 1], [0, 0, 0]], True)
+    cases['five_vertex_cycle'] = ([[2, 2, 2], [0, 0, 0], [2, 0, 2]], True)
+    cases['nonbipartite_choices'] = ([[1, 1, 1], [1, 0, 1], [1, 1, 1]], True)
+    return cases
+
+
+def planted(n, density, seed):
+    """Build a known feasible grid by placing noncrossing candidate segments."""
+    rng = random.Random(seed)
+    layout = [[int(rng.random() < density) for _ in range(n)] for _ in range(n)]
+    points, edges = candidates(layout)
+    rng.shuffle(edges)
+    grid = [[0] * n for _ in range(n)]
+    occupied = {}
+    for a, b in edges:
+        if rng.random() > .55:
+            continue
+        r, c = points[a]; s, d = points[b]
+        cells = ([(r, k) for k in range(c + 1, d)] if r == s
+                 else [(k, c) for k in range(r + 1, s)])
+        orientation = int(r == s)
+        if any(x in occupied and occupied[x] != orientation for x in cells):
+            continue
+        for x in cells:
+            occupied[x] = orientation
+        grid[r][c] += 1; grid[s][d] += 1
+    return grid
+
+
+def stress_cases():
+    """Use fixed seeds at two sizes and three connector densities."""
+    for n in (20, 50):
+        for density in (.25, .6, 1.0):
+            for seed in (17, 18, 19, 20):
+                yield f"planted-{n}-{density}-{seed}", planted(n, density, seed)
+
+
 def main():
     """Execute differential tests or repeated end-to-end timing runs."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--binary', type=Path, required=True)
-    parser.add_argument('--benchmark', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--benchmark', action='store_true')
+    mode.add_argument('--benchmark-regressions', action='store_true')
+    mode.add_argument('--regressions', action='store_true')
+    mode.add_argument('--stress', action='store_true')
     args = parser.parse_args(); binary = args.binary.resolve()
-    if args.benchmark:
+    if args.benchmark or args.benchmark_regressions:
         results = {}
-        for name, (grid, expected) in large_cases().items():
+        for name, (grid, expected) in (regression_cases() if args.benchmark_regressions else large_cases()).items():
             run(binary, grid, expected)  # One warmup process, excluded from measurements.
             results[name] = [run(binary, grid, expected) for _ in range(10)]
-        dest = ROOT / 'data/timings.json'; dest.parent.mkdir(exist_ok=True)
+        dest = ROOT / 'data' / ('regression-timings.json' if args.benchmark_regressions else 'timings.json')
+        dest.parent.mkdir(exist_ok=True)
         dest.write_text(json.dumps(results, indent=2) + '\n')
         print(json.dumps(results, indent=2)); return
     count = 0
+    if args.stress:
+        for name, grid in stress_cases():
+            elapsed = run(binary, grid, True, timeout=2)
+            print(f'{name}: PASS ({elapsed:.3f} ms)', flush=True)
+            count += 1
+        print(f'PASS: {count} planted stress cases')
+        return
+    for name, (grid, expected) in regression_cases().items():
+        elapsed = run(binary, grid, expected, timeout=2)
+        if args.regressions:
+            print(f'{name}: PASS ({elapsed:.3f} ms)', flush=True)
+        count += 1
+    if args.regressions:
+        print(f'PASS: {count} performance/correctness regressions')
+        return
     sample = list(map(int, (ROOT / 'tests/sample1.in').read_text().split()))
     n, m = sample[:2]; grid = [sample[2+r*m:2+(r+1)*m] for r in range(n)]
     run(binary, grid, True); count += 1
@@ -145,6 +222,8 @@ def main():
                 r, c = points[p]; grid[r][c] += 1
         run(binary, grid, True); count += 1
     for grid, expected in large_cases().values(): run(binary, grid, expected); count += 1
+    for _, grid in stress_cases():
+        run(binary, grid, True, timeout=2); count += 1
     # Ensure the validator itself rejects invalid degrees, one-sided links and crossings.
     for grid, output in [([[1,1],[0,0]], '1 1 0 0 0 0\n1 2 0 0 1 0\n'),
                          ([[1,1],[0,0]], '1 1 0 0 0 1\n1 2 0 0 0 1\n'),

@@ -30,7 +30,7 @@ ADS/
 └── recover-design/        # 第三次实验：Recover the Design
 ```
 
-Project 3 位于 `recover-design/`（Recover the Design），沿用上述子目录；YiFeng Zheng 编写，YuJie Sun 复现审批，当前为待审批初稿。具体命令见 [Project 3 README](recover-design/README.md)。
+Project 3 位于 `recover-design/`（Recover the Design），沿用上述子目录；YiFeng Zheng 编写，YuJie Sun 复现审批，已修复本地搜索性能问题并更新报告，待独立复现审批。具体命令见 [Project 3 README](recover-design/README.md)。
 
 新实验沿用上面的子目录。模板用法见 `templates/report/README.md`；现有实验的依赖、运行和报告生成方法见 `compare-trees/README.md` 与 `shortest-path-heaps/README.md`。
 

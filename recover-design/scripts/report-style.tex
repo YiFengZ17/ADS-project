@@ -1,7 +1,12 @@
 \documentclass[UTF8,fontset=none,a4paper,11pt,twoside]{ctexart}
 \usepackage[left=2.5cm,right=2cm,top=2.5cm,bottom=2.5cm]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
-\newfontfamily\titlefont{TeX Gyre Termes}
+\IfFontExistsTF{TeX Gyre Termes}{
+  \newfontfamily\titlefont{TeX Gyre Termes}
+}{
+  \newfontfamily\titlefont{texgyretermes}[Extension=.otf,UprightFont=*-regular,
+    BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+}
 \usepackage{graphicx,longtable,booktabs,array,enumitem,needspace,listings}
 \usepackage[hidelinks]{hyperref}
 \renewcommand{\contentsname}{Contents}
@@ -27,8 +32,17 @@
 \raggedbottom
 \clubpenalty=10000
 \widowpenalty=10000
-\setmainfont{Latin Modern Roman}
-\setmonofont{Latin Modern Mono}
+\IfFontExistsTF{Latin Modern Roman}{
+  \setmainfont{Latin Modern Roman}
+}{
+  \setmainfont{lmroman10}[Extension=.otf,UprightFont=*-regular,
+    BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+}
+\IfFontExistsTF{Latin Modern Mono}{
+  \setmonofont{Latin Modern Mono}
+}{
+  \setmonofont{lmmono10-regular.otf}
+}
 
 \setCJKmainfont{FandolSong-Regular.otf}
 \setCJKmonofont{FandolFang-Regular.otf}

@@ -15,3 +15,5 @@
 - [作者工作区处理记录](2026-10-22-author-response.md)
 
 上述评分采用 subagent 自拟标准，不是官方成绩，也不能替代 YuJie Sun 的审批。
+
+2026-11-01：搜索性能修复与新的本地验证已完成，详见 [修复记录](2026-11-01-performance-fix.md)。仍待实际 PTA 判题和 YuJie Sun 独立审批。

@@ -45,8 +45,11 @@ make check
 python3 scripts/check_rollback.py
 make sanitize
 make benchmark
+python3 scripts/check.py --binary build/recover-design --regressions
+python3 scripts/check.py --binary build/recover-design --stress
+python3 scripts/check.py --binary build/recover-design --benchmark-regressions
 ```
 
-The development workflow checks 935 solver cases and three invalid outputs; the rollback check reruns two cases from that suite. It writes executables to the project's `build/`, rollback counts to `build/rollback-check/results.txt`, and timing measurements to `data/timings.json`. Timing includes process startup, input/output and Python validation. These outputs stay outside TA and Peer Review.
+The development workflow checks 968 grid cases, three invalid outputs, and 2,000 Boolean formulas against exhaustive truth tables. The grid checks include nine global-degree regressions and 24 planted larger designs, each with a two-second process limit. The rollback check validates learning, backtracking and restarts on an instrumented copy. Output files go to `build/`, search counts to `build/rollback-check/results.txt`, and timings to `data/timings.json` or `data/regression-timings.json`. Timing includes process startup, input/output and Python validation. These outputs stay outside TA and Peer Review.
 
-The exact backtracking solver has exponential worst-case time. Local checks do not establish hidden-judge acceptance.
+The solver is self-contained C++17 and uses component checks, watched propagation and conflict learning. Worst-case time and learned-clause storage can grow exponentially. Local checks do not establish hidden-judge acceptance. The report distinguishes historical timing data from current measurements.
