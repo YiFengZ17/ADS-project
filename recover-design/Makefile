@@ -9,11 +9,13 @@ build/recover-design: code/main.cpp
 check: all
 	$(PYTHON) scripts/check.py --binary build/recover-design
 	CXX="$(CXX)" $(PYTHON) scripts/check_boolean.py
+	CXX="$(CXX)" $(PYTHON) scripts/check_rollback.py
 sanitize:
 	mkdir -p build
 	$(CXX) -std=c++17 -O1 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie -no-pie code/main.cpp -o build/recover-design-san
 	$(PYTHON) scripts/check.py --binary build/recover-design-san
 	CXX="$(CXX)" $(PYTHON) scripts/check_boolean.py --sanitize
+	CXX="$(CXX)" $(PYTHON) scripts/check_rollback.py --sanitize
 benchmark: all
 	$(PYTHON) scripts/check.py --binary build/recover-design --benchmark
 report:
