@@ -30,13 +30,7 @@ Let $x_e=1$ if edge $e$ is used and $x_e=0$ otherwise. The rules become:
 1. For each connector $v$ with degree $k_v$: $\sum_{e\ni v}x_e=k_v$.
 2. If a horizontal edge $e$ and a vertical edge $f$ pass the same empty cell: $x_e+x_f\leq1$.
 
-We find the edges by scanning each row and each column once. While adding an edge, we mark the empty cells it passes in a horizontal grid or a vertical grid. A cell marked in both grids gives a crossing pair. For example, in the grid below the middle-row edge $h$ and the middle-column edge $v$ meet at the empty center. Each connector has degree 1 and only one edge, so both edges are needed, which is not allowed, and the answer is `No Solution`.
-
-```text
-. 1 .        . | .
-1 . 1        - + -
-. 1 .        . | .
-```
+We find the edges by scanning each row and each column once. While adding an edge, we mark the empty cells it passes in a horizontal grid or a vertical grid. A cell marked in both grids gives a crossing pair. For example, if the center of a 3 by 3 grid is empty and the four cells next to it are connectors, the middle-row edge and the middle-column edge cross at the center, so they can not both be used.
 
 ## Quick Checks
 
@@ -46,12 +40,11 @@ We color the graph itself instead of using the chessboard color $(r+c) \bmod 2$,
 
 ## Clauses
 
-A clause is an "or" of some conditions, and every clause must be true. Each edge is one Boolean variable. For a connector with $d$ edges and degree $k$ (if $k>d$ the answer is `No Solution`):
+After the quick checks, we still need to search for the edges. Our first version tried the edges one by one with plain backtracking and checked the two rules directly in the code. It was slow on some large inputs, because it often failed for the same reason again and again in different branches, and it had no way to remember why a choice failed. So we decided to write every rule in the same simple form, a clause. A clause is a list of conditions joined by "or", and every clause must be true. Each edge is one Boolean variable (used or not used). With all rules in this form, one search procedure can handle both rules, and when the search fails we can save the reason as one more clause of the same form.
 
-1. Any $k+1$ of its edges can not all be used, so at least one of them is not used.
-2. Any $d-k+1$ of its edges can not all be unused, so at least one of them is used.
+The crossing rule is easy: for a crossing pair $e,f$ we add $(\neg x_e\lor\neg x_f)$, which means "not both".
 
-Together these mean exactly $k$ edges are used. For example, if $d=3$ and $k=2$ with edges $a,b,c$, we get $(\neg a\lor\neg b\lor\neg c)$, $(a\lor b)$, $(a\lor c)$ and $(b\lor c)$. Since $d\leq4$, there are only a few clauses per connector. Each crossing pair gives the clause $(\neg x_e\lor\neg x_f)$.
+The degree rule "exactly $k$ of its $d$ edges are used" is not an "or" by itself, so we split it into two parts. "At most $k$" means any $k+1$ of the edges can not all be used, so at least one of them is unused. "At least $k$" means any $d-k+1$ of the edges can not all be unused, so at least one of them is used. For example, with $d=3$ edges $a,b,c$ and $k=2$, we get $(\neg a\lor\neg b\lor\neg c)$, $(a\lor b)$, $(a\lor c)$ and $(b\lor c)$. Listing all subsets sounds slow, but $d\leq4$, so each connector gives at most a few short clauses. If $k>d$, we print `No Solution` at once.
 
 ## Search
 
