@@ -128,7 +128,7 @@ Dense grids (density 1.0) are the slowest. Every connector has up to four choice
 
 ## Limitations and Improvements
 
-1. The worst case is exponential, and our generated tests may miss the hardest inputs. We have not tested on the hidden PTA cases.
+1. The worst case is exponential, and our generated tests may miss the hardest inputs. We have not tested on the hidden test cases of the judge.
 2. Learned clauses are never deleted, so memory may grow on hard inputs. Deleting old learned clauses that are no longer useful would help.
 3. Choosing the next edge scans all edges in $O(E)$. Keeping the free edges in a binary heap ordered by score would make it $O(\log E)$.
 
