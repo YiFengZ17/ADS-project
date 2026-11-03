@@ -75,7 +75,7 @@ def convert(markdown):
                 level = int(t.tag[1:])
                 command = {1: 'section', 2: 'subsection', 3: 'subsubsection'}.get(level, 'paragraph')
                 # Keep a heading with its first lines; tables reserve their own space.
-                reserve = {'Correctness Tests': 23, 'Timing Results': 23, 'Limitations and Improvements': 12}.get(title, 5)
+                reserve = {'Correctness Tests': 8, 'Timing Results': 8, 'Limitations and Improvements': 12}.get(title, 5)
                 body.append(r'\Needspace{' + str(reserve) + r'\baselineskip}' + chr(92) + command + '{')
         elif typ == 'heading_close':
             # Cover title and abstract are centered and unnumbered.

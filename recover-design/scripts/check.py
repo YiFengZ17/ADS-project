@@ -48,6 +48,59 @@ def oracle(grid):
     return False
 
 
+def count_solutions(grid):
+    """Count all legal edge subsets by full enumeration (small grids only)."""
+    points, edges = candidates(grid)
+    target = [grid[r][c] for r, c in points]
+    conflicts = [(i, j) for i in range(len(edges)) for j in range(i) if crossing(points, edges[i], edges[j])]
+    total = 0
+    for bits in itertools.product((0, 1), repeat=len(edges)):
+        deg = [0] * len(points)
+        for bit, (a, b) in zip(bits, edges):
+            deg[a] += bit; deg[b] += bit
+        total += deg == target and not any(bits[i] and bits[j] for i, j in conflicts)
+    return total
+
+
+def plant_small(layout, rng):
+    """Choose random noncrossing candidate edges on a layout and return their degrees."""
+    points, edges = candidates(layout); chosen = []
+    for edge in edges:
+        if rng.random() < .5 and not any(crossing(points, edge, other) for other in chosen): chosen.append(edge)
+    grid = [[0] * len(layout[0]) for _ in layout]
+    for a, b in chosen:
+        for q in (a, b):
+            r, c = points[q]; grid[r][c] += 1
+    return grid
+
+
+def thin_cases(rng):
+    """Minimum height or width: random 2 x m and n x 2 grids plus two 2 x 50 strips."""
+    cases = []
+    for index in range(150):
+        long_side = rng.randrange(3, 9)
+        if index % 2:
+            grid = [[rng.randrange(5) if rng.random() < .7 else 0 for _ in range(long_side)] for _ in range(2)]
+        else:
+            grid = plant_small([[int(rng.random() < .75) for _ in range(long_side)] for _ in range(2)], rng)
+        if rng.random() < .5:
+            grid = [list(row) for row in zip(*grid)]
+        cases.append((grid, oracle(grid)))
+    cases.append(([[1] * 50, [1] * 50], True))
+    cases.append(([[1, 1] for _ in range(50)], True))
+    return cases
+
+
+def multiple_solution_cases(rng):
+    """Random small grids that have at least two legal designs."""
+    cases = []
+    while len(cases) < 50:
+        grid = plant_small([[int(rng.random() < .75) for _ in range(4)] for _ in range(3)], rng)
+        if count_solutions(grid) >= 2:
+            cases.append(grid)
+    return cases
+
+
 def validate(grid, output, expected):
     """Trace printed rays through cells; check reciprocity, degree, order and crossings."""
     if output == 'No Solution\n':
@@ -210,6 +263,11 @@ def main():
                            ([[1,0,1],[0,0,0],[1,0,1]], True),
                            ([[1,2,1],[0,0,0]], True)]:
         run(binary, grid, expected); count += 1
+    # Thin grids (n = 2 or m = 2) and grids with more than one legal design.
+    for grid, expected in thin_cases(random.Random(23)):
+        run(binary, grid, expected); count += 1
+    for grid in multiple_solution_cases(random.Random(29)):
+        run(binary, grid, True); count += 1
     # Plant noncrossing solutions on random 4x4 layouts to exercise more satisfiable inputs.
     for _ in range(100):
         layout = [[int(rng.random() < .65) for _ in range(4)] for _ in range(4)]

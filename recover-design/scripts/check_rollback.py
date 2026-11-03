@@ -38,8 +38,7 @@ struct AuditStats {
          'vector<int> learned = analyze(conflict, back_level); ++audit_learned;'),
         ('size_t mark = boundaries[level];',
          '++audit_backtracks; audit_jumps += ((int)boundaries.size() - level > 1);\n        size_t mark = boundaries[level]; audit_undone += trail.size() - mark;'),
-        ('backtrack(0); conflicts_since_restart = 0;',
-         '++audit_restarts; backtrack(0); conflicts_since_restart = 0;'),
+        ('backtrack(0);', '++audit_restarts; backtrack(0);'),
     ]:
         source = replace_once(source, old, new)
     out = ROOT / 'build' / ('rollback-check-san' if args.sanitize else 'rollback-check')

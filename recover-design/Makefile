@@ -1,9 +1,12 @@
 CXX ?= g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Wpedantic
 PYTHON ?= python3
-.PHONY: all check sanitize benchmark report package-code
-all: build/recover-design
+.PHONY: all check sanitize benchmark benchmark-sizes report package-code
+all: build/recover-design build/gen
 build/recover-design: code/main.cpp
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) $< -o $@
+build/gen: code/gen.cpp
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) $< -o $@
 check: all
@@ -18,6 +21,8 @@ sanitize:
 	CXX="$(CXX)" $(PYTHON) scripts/check_rollback.py --sanitize
 benchmark: all
 	$(PYTHON) scripts/check.py --binary build/recover-design --benchmark
+benchmark-sizes: all
+	$(PYTHON) scripts/benchmark_sizes.py --binary build/recover-design
 report:
 	$(PYTHON) scripts/build_report.py --compile
 package-code: check
