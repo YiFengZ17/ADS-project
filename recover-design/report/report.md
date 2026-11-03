@@ -13,7 +13,7 @@ We recover a fence layout from the degrees of the connectors on a grid. We treat
 
 # Introduction
 
-In the PTA problem "Recover the Design", we are given an $n\times m$ grid ($1<n,m\leq50$). A cell with 0 is empty, and a cell with $k$ (1 to 4) is a connector that must have fences in exactly $k$ of its four directions. Fences are horizontal or vertical. They can only turn or cross at connectors, not in empty cells. If a fence goes straight through a connector, it uses two directions of that connector.
+In the problem "Recover the Design", we are given an $n\times m$ grid ($1<n,m\leq50$). A cell with 0 is empty, and a cell with $k$ (1 to 4) is a connector that must have fences in exactly $k$ of its four directions. Fences are horizontal or vertical. They can only turn or cross at connectors, not in empty cells. If a fence goes straight through a connector, it uses two directions of that connector.
 
 For each connector, in row order and from left to right, we print `row col up down left right`, where each direction is 0 or 1. Numbers are separated by one space. If there is no layout we print `No Solution`. Any valid layout is accepted.
 
