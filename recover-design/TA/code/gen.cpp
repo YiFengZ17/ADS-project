@@ -1,18 +1,7 @@
-// Input generator for Project 3 (Recover the Design).
-//
-// Usage: ./gen n m density type seed > case.in
-//   n, m     grid size (2..50)
-//   density  chance that a cell holds a connector, for example 0.6
-//   type     planted : put random straight fences that never cross at an
-//                      empty cell, then write the degree of every connector.
-//                      So this input surely has a solution.
-//            broken  : make a planted grid, then add 1 to one connector and
-//                      take 1 from another. The degree sum does not change, so
-//                      the quick check often can not reject it and the solver
-//                      has to search. It may or may not have a solution.
-//            random  : every connector gets a random degree from 1 to 4.
-//                      Most of these grids have no solution.
-//   seed     random seed, the same seed always gives the same grid
+// Input generator for the large tests.
+// Usage: ./gen n m density type seed
+// type: planted (has a solution), broken (planted grid with one degree moved),
+//       random (random degrees 1..4)
 
 #include <algorithm>
 #include <cstdlib>
@@ -50,7 +39,7 @@ int main(int argc, char **argv) {
             for (int c = 0; c < m; c++)
                 if (has[r][c]) degree[r][c] = pick(rng);
     } else {
-        // list all segments between two neighbouring connectors
+        // all segments between neighbouring connectors
         vector<Segment> segments;
         for (int r = 0; r < n; r++) {
             int prev = -1;
@@ -70,13 +59,13 @@ int main(int argc, char **argv) {
         }
         shuffle(segments.begin(), segments.end(), rng);
 
-        // used[r][c]: 0 = free, 1 = a horizontal fence passes, 2 = a vertical fence passes
+        // used[r][c]: 0 free, 1 horizontal fence, 2 vertical fence
         vector<vector<int>> used(n, vector<int>(m, 0));
         for (const Segment &s : segments) {
             if (coin(rng) > 0.55) continue;  // keep about half of the segments
             bool flat = (s.r1 == s.r2);
             int mine = flat ? 1 : 2, other = flat ? 2 : 1;
-            // a fence can not cross another fence at an empty cell
+            // skip it if it would cross a fence at an empty cell
             bool ok = true;
             for (int r = s.r1; r <= s.r2; r++)
                 for (int c = s.c1; c <= s.c2; c++)
@@ -88,11 +77,10 @@ int main(int argc, char **argv) {
             degree[s.r1][s.c1]++;
             degree[s.r2][s.c2]++;
         }
-        // a connector with no fence becomes an empty cell; the planted fences stay valid
-        // because no fence ends there or passes through it
+        // a connector with no fence just becomes an empty cell
 
         if (type == "broken") {
-            // move one unit of degree from connector b to connector a
+            // move 1 degree from connector b to connector a
             for (int tries = 0; tries < 1000; tries++) {
                 int ra = rng() % n, ca = rng() % m, rb = rng() % n, cb = rng() % m;
                 if (ra == rb && ca == cb) continue;
@@ -108,7 +96,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    // print the grid in the input format of the problem
+    // print the grid in the input format
     cout << n << ' ' << m << '\n';
     for (int r = 0; r < n; r++) {
         for (int c = 0; c < m; c++) cout << (c ? " " : "") << degree[r][c];
