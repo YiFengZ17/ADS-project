@@ -27,10 +27,13 @@ ADS/
 │   ├── scripts/           # 构建与分析入口
 │   ├── Makefile
 │   └── build/、data/       # 本地生成，不上传 Git
-└── recover-design/        # 第三次实验：Recover the Design
+├── recover-design/        # 第三次实验：Recover the Design
+└── knapsack-dp/           # 第四次实验：Improving Dynamic Programming for Knapsack
 ```
 
 Project 3 位于 `recover-design/`（Recover the Design），沿用上述子目录；YiFeng Zheng 编写，YuJie Sun 复现审批，已修复本地搜索性能问题，并按 20 分评分细则修订了代码注释、测试和报告，待独立复现审批。具体命令见 [Project 3 README](recover-design/README.md)。
+
+Project 4 位于 `knapsack-dp/`（Improving Dynamic Programming for Knapsack），沿用上述子目录；YuJie Sun 编写，YiFeng Zheng 复现审批。实现 DP-1、教材 3.4/3.5 节的列表 DP 与上界剪枝，以及 Bonus 的 $O(n+w^3)$ 算法，待独立复现审批。具体命令见 [Project 4 README](knapsack-dp/README.md)。
 
 新实验沿用上面的子目录。模板用法见 `templates/report/README.md`；现有实验的依赖、运行和报告生成方法见 `compare-trees/README.md` 与 `shortest-path-heaps/README.md`。
 
