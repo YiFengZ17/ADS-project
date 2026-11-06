@@ -24,8 +24,9 @@ EXPERIMENTS = {
 }
 LABELS = {'dp1': 'DP-1', 'lists': 'DP-with-Lists', 'lists-sorted': 'DP-with-Lists, sorted items',
           'bounds': 'DP-with-Upper-Bounds', 'small': 'Small-weight method (bonus)'}
-STYLE = {'dp1': ('#2a78d6', 'o'), 'lists': ('#eb6834', 's'), 'lists-sorted': ('#1baf7a', 'v'),
-         'bounds': ('#eda100', 'D'), 'small': ('#e87ba4', '^')}
+# colors checked with the dataviz palette validator: every pair that shares a figure passes
+STYLE = {'dp1': ('#2a78d6', 'o'), 'lists': ('#e87ba4', 's'), 'lists-sorted': ('#008300', 'v'),
+         'bounds': ('#eda100', 'D'), 'small': ('#e34948', '^')}
 
 
 def instance(kind, n, R, seed):

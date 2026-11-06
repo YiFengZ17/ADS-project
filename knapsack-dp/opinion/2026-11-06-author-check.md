@@ -37,3 +37,7 @@ make package-code
 
 - YiFeng Zheng 的独立复现审批。
 - 报告封面作者/审批人分工（YuJie Sun 编写、YiFeng Zheng 审批）是按本仓库“角色可互换”的约定推定的，如不符请告知后修改。
+
+## 2026-11-07 补充：图的配色
+
+初版图中 DP-with-Lists（橙 `#eb6834`）与 DP-with-Upper-Bounds（黄 `#eda100`）在正常视力下的色差只有 ΔE 13.7，低于 15 的下限，而两条线在实验 1、2 的图中同时出现。本机 node 修复后，用 dataviz 配色验证脚本逐对检查，改为：DP-1 蓝 `#2a78d6`、DP-with-Lists 粉 `#e87ba4`、排序后的列表法 绿 `#008300`、DP-with-Upper-Bounds 黄 `#eda100`、Bonus 方法 红 `#e34948`。每张图用到的颜色在“所有两两组合”模式下均通过（最差 CVD ΔE 13.0，正常视力 ΔE 19.6）。只重画了图，计时数据和报告正文未改；两份 PDF 已重建并重新检查匿名性。
