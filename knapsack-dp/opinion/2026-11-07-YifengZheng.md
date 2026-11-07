@@ -118,4 +118,19 @@ Linux 6.18（x86-64），Intel Xeon 2.10 GHz（4 核），GCC 13.3.0（libstdc++
 
 ## 作者处理
 
-（由 YuJie Sun 填写处理结果和对应 commit）
+由 Claude 按 YuJie Sun 的要求整理和修改，日期 2026-11-07，修复 commit 见文末。
+
+| 编号 | 处理 |
+| --- | --- |
+| 1 | 已修复。`gen.cpp` 不再用 `uniform_int_distribution`，改为直接对 `mt19937_64` 的输出做拒绝采样（`uniform()` 函数）。`mt19937_64` 的输出由 C++ 标准规定，所以任何编译器和标准库生成同一份数据。`check.py` 新增一组测试：用 Python 按标准重写 `mt19937_64` 和生成规则，要求与 `gen.cpp` 的输出逐字节一致（20 组参数，含 $R=10^8$）；Python 版引擎先用标准规定的检验值（默认种子第 10000 个输出为 9981545732273789042）核对过。数据变了，所以四组实验全部重跑，报告中的表、图和数值全部更新。 |
+| 2 | 已修复。跳过规则改为按 work（与机器无关）：某算法在某规模三个输入的中位 work 超过上限后不再测更大规模，上限为 DP-1 $2\times10^9$ 个表项、列表法 $10^8$ 个状态、上界剪枝和 Bonus 方法 $3\times10^7$，在作者机器上约为半秒。这样任何机器都测同一批输入；实验 2 中 uncorrelated 的列表法状态数约 $4\times10^7$，低于上限，所以 $R\geq10^4$ 不会再被跳过。README 和报告 Timing Method 一节已同步。 |
+| 3 | 已修复。摘要不再写绝对时间；正文中依赖机器的时间都在作者环境下给出，并说明 work 才是与机器无关的量。 |
+| 4 | 已修复。Problem Description 并入 Introduction（题意、输入输出、难点三段），Algorithm 回到第 2 章，Testing、Analysis 分别为第 3、4 章。 |
+| 5 | 已修改。摘要压到 5 句；Discussion 合并为 5 段；Bonus 一节在 concave、max-plus convolution、SMAWK、quickselect、LP relaxation 等第一次出现时各加一句白话解释，去掉 Monge、totally monotone 等词；删去“we checked the generated code”和向量指令的说法，改为不依赖平台的解释。Limitations 每条压到一两句。 |
+| 6 | 已核对，保留。教材节选第 53 页（PDF 第 4 页）原文为“Lemma 3.4.3 If the total number of undominated states of an instance of (KP) is bounded by B, then (KP) can be solved by DP-with-Lists in O(nB) time.” 编号确实存在。同页附近的 Definition 3.4.1、Corollary 3.4.2 也在节选中。 |
+| 7 | 已修复。代码注释不再写报告编号，改为写作者名和章节（如 “SMAWK (Aggarwal et al. 1987)”、“Polak, Rohwedder and Wegrzycki (2021)”、“Section 3.4 of the book”），以后报告编号变化也不会再对不上。其他注释同时按 STYLE.md 第四节精简为每个函数一两行，删去 incumbent 等术语；`main.cpp` 去掉文件头。只改注释，求解逻辑不变。 |
+| 8 | 作者已核对（仍请审批人确认）。论文 arXiv 2105.04035v1 第 7 页 Lemma 2.1：“Let p be a maximal prefix solution to Knapsack. There is an optimal solution z that satisfies ‖z − p‖₁ ⩽ 2s”，其中 s 是最大物品重量。0-1 背包中 ‖z − p‖₁ 就是两个解不同的物品个数，所以“至多相差 2w 个物品”与原文一致；条件是 p 为按效率排序（相同效率可任意排列）的最大前缀解，与代码中 quickselect 得到的前缀一致。报告引用正式版 LIPIcs，正文只按内容引用，不写引理编号。 |
+
+修复 commit：`843eb3b`（第 1、2 条：生成器与跳过规则）、`efe5067`（第 7 条：代码注释）、`345242a`（第 3–5 条：重跑实验、重写报告并更新提交包）。第 6、8 条为核对，无代码修改。
+
+处理后已运行：`make check`（7 组 3,332 个用例全部 PASS）、`make sanitize`（606 个用例 PASS）、`make benchmark`（约 30 分钟，所有输入上各算法结果一致）、`make package-code`；并在 `TA/` 中按 README 重新编译，`gen 1000 1000 strong 1` 上 `bench bounds` 的 work 为 6,441,019，与报告数据一致。重跑后的定性结论与上一版相同；具体数值随新数据变化，例如 subset 数据在实验 1 中三个输入都没能被贪心解恰好装满，上界剪枝在 $n=1000$ 时约为 DP-1 的 15 倍慢。

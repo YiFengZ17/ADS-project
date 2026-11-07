@@ -2,7 +2,7 @@
 
 - 编写负责人：YuJie Sun（YujieSun），负责代码、测试、报告及意见处理。
 - 审批负责人：YiFeng Zheng（YifengZheng），负责独立复现和审阅。
-- 当前状态：作者侧已完成代码、测试、实验和报告，并通过 `make check`、`make sanitize`；代码与实验由 Claude 按用户要求编写和运行。尚待 YiFeng Zheng 独立复现审批。
+- 当前状态：YiFeng Zheng 已于 2026-11-07 提交复现意见（8 条，见下），作者已逐条处理并重跑全部实验；分工（YuJie Sun 编写、YiFeng Zheng 审批）已由审批人确认。审批结论仍待 YiFeng Zheng 本人填写。
 
 在本目录新建 `日期-YifengZheng.md`，记录：姓名、日期、`git rev-parse HEAD`、环境、执行命令、关键输出、代码与报告问题、审批结论。作者在同一记录的“作者处理”部分回复，注明修复 commit。
 
