@@ -14,3 +14,5 @@
 - 报告中的计时结论是否有实测数据支持。计时来自作者本机（Apple M5、macOS、Apple Clang），换机器后绝对时间会变，相对快慢应一致。
 
 2026-11-06：作者侧完成与自查记录见 [2026-11-06-author-check.md](2026-11-06-author-check.md)。
+
+2026-11-07：YiFeng Zheng 的复现记录与审阅建议见 [2026-11-07-YifengZheng.md](2026-11-07-YifengZheng.md)（由 Claude 代为运行；审批结论待 YiFeng Zheng 本人填写）。
