@@ -6,6 +6,21 @@
 - 对应 commit：`df089d620d5a0bcac3d4f665a2e7bda77ad3a191`
 - 本记录只给出复现结果和建议，没有修改报告或代码。审批结论由 YiFeng Zheng 本人填写。
 
+## 问题汇总
+
+正确性复现全部通过，没有发现代码错误。以下问题请作者在文末"作者处理"中逐条回复（详细依据见下文各节）：
+
+| 编号 | 类别 | 问题 | 建议 |
+| --- | --- | --- | --- |
+| 1 | 可复现性 | `gen.cpp` 用 `std::uniform_int_distribution`，GCC（libstdc++）和 Apple Clang（libc++）用同一种子生成的数据不同；在 Linux 上无法复现报告里的具体数值 | 自己写整数取值函数，使各平台数据一致并重跑实验；或至少在 README 和报告中写明数据依赖 libc++ |
+| 2 | 可复现性 | `benchmark.py` 的 500 ms 跳过阈值与机器有关，较慢的机器上实验 2 会跳过列表法，"大容量时列表法更快"的结论跑不出来 | 跳过规则改用与机器无关的 work，或实验 2 不跳过列表法，或在 README 说明需调大 `SKIP_MS` |
+| 3 | 报告 | 摘要中"less than 90 ms on every type"只对作者机器成立（复现机器上为 147–236 ms） | 写成"on our machine"或改用相对说法 |
+| 4 | 报告结构 | Introduction、Problem Description、Algorithm 三章，算法排到第 3 章，与评分标准"第 1 章问题描述、第 2 章算法"对不上 | 按 `STYLE.md` 把 Problem Description 并入 Introduction |
+| 5 | 报告文风 | 摘要过长且术语密集；Discussion 有 9 段；Bonus 一节术语未解释；"we checked the generated code"无法核对 | 按 `STYLE.md` 精简摘要和 Discussion，术语首次出现时加一句解释，删去或改写依赖平台的说法 |
+| 6 | 引用 | "Lemma 3.4.3 of [1]"的引理编号未经确认 | 确认教材节选中有此编号，否则只引用 [1] |
+| 7 | 代码注释 | `smawk` 注释引用"[4]"应为 [3]；`small_items` 注释引用"[3]"应为 [2] | 改正编号，或直接写作者名 |
+| 8 | 待审批人核对 | "最优解与贪心前缀至多相差 $2w$ 个物品"未能对照论文原文（复现环境无法访问 arxiv.org） | 由 YiFeng Zheng 对照论文确认 |
+
 ## 环境
 
 Linux 6.18（x86-64），Intel Xeon 2.10 GHz（4 核），GCC 13.3.0（libstdc++），Python 3.13。作者环境为 macOS / Apple M5 / Apple Clang（libc++），因此这是一次不同平台、不同编译器、不同标准库的复现。
