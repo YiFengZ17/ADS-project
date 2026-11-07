@@ -30,9 +30,9 @@ make benchmark
 python3 scripts/benchmark.py --plot-only
 ```
 
-`make` 输出 `build/knapsack`、`build/bench` 和 `build/gen`。`check` 在终端报告 6 组共 3,312 个用例；`sanitize` 输出 `build/knapsack-san`（ASan/UBSan），并运行其中 586 个较小用例。
+`make` 输出 `build/knapsack`、`build/bench` 和 `build/gen`。`check` 在终端报告 7 组共 3,332 个用例，其中一组用 Python 按 C++ 标准重写的 `mt19937_64` 核对生成器输出，保证任何编译器和标准库生成同一份数据；`sanitize` 输出 `build/knapsack-san`（ASan/UBSan），并运行其中 606 个较小用例。
 
-`benchmark` 是报告计时表和图的来源：四组实验（`size`、`range`、`small-n`、`small-w`），每组五类数据 × 3 个种子，每个输入预热 1 次、正式运行 10 次取中位数；某算法在某一规模的中位数超过 500 ms 后，不再测更大的规模。输入文件缓存在 `data/instances/`，结果写入 `data/<实验名>.json`，图写入 `figures/<实验名>.png/.pdf`，终端同时打印报告用的表格数据。全部实验约需 20 分钟。`--plot-only` 只从已有 JSON 重画图和表。新运行不会改写报告中的历史结果。
+`benchmark` 是报告计时表和图的来源：四组实验（`size`、`range`、`small-n`、`small-w`），每组五类数据 × 3 个种子，每个输入预热 1 次、正式运行 10 次取中位数；某算法在某一规模三个输入的中位 work 超过固定上限（DP-1 为 $2\times10^9$ 个表项，列表法为 $10^8$ 个状态，上界剪枝和 Bonus 方法为 $3\times10^7$）后，不再测更大的规模。work 与机器无关，所以任何机器都测同一批输入，只是总时间不同。输入文件缓存在 `data/instances/`，结果写入 `data/<实验名>.json`，图写入 `figures/<实验名>.png/.pdf`，终端同时打印报告用的表格数据。全部实验在作者机器（Apple M5）上约需 30 分钟，较慢的机器相应更久。`--plot-only` 只从已有 JSON 重画图和表。新运行会覆盖 `figures/` 中已提交的图；只想复现、不想改动仓库时，请在仓库副本中运行。报告中的数值不会被自动改写。
 
 ## 报告构建与打包
 

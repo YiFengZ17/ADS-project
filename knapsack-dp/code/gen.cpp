@@ -1,8 +1,9 @@
-// Test data generator.
-// Usage: ./gen n R type seed [ratio]
-// type: uncorrelated, weak, strong, inverse or subset (see below); weights are about 1..R.
+// Test data generator. Usage: ./gen n R type seed [ratio]
+// type: uncorrelated, weak, strong, inverse or subset; weights are about 1..R.
 // The capacity is ratio (default 0.5) times the total weight. Prints "n c" and n lines "w p".
+// The same arguments give the same data with any compiler.
 
+#include <climits>
 #include <cstdlib>
 #include <iostream>
 #include <random>
@@ -11,6 +12,16 @@
 using namespace std;
 
 typedef long long ll;
+
+// random integer in [lo, hi]; we do not use uniform_int_distribution,
+// because GCC and Clang give different numbers with it for the same seed
+ll uniform(mt19937_64 &rng, ll lo, ll hi) {
+    unsigned long long range = (unsigned long long)(hi - lo) + 1;
+    unsigned long long limit = ULLONG_MAX - ULLONG_MAX % range;  // a multiple of range
+    unsigned long long x = rng();
+    while (x >= limit) x = rng();  // drop the few values that would make small results more likely
+    return lo + (ll)(x % range);
+}
 
 int main(int argc, char **argv) {
     ios::sync_with_stdio(false);
@@ -26,26 +37,25 @@ int main(int argc, char **argv) {
         cerr << "need n >= 1, 1 <= R <= 1e8 and 0 <= ratio <= 1\n";
         return 1;
     }
-    auto uniform = [&](ll lo, ll hi) { return uniform_int_distribution<ll>(lo, hi)(rng); };
     ll gap = max(1LL, R / 10);
 
     vector<ll> w(n), p(n);
     ll total = 0;
     for (ll i = 0; i < n; i++) {
         if (type == "uncorrelated") {  // weight and profit are independent
-            w[i] = uniform(1, R);
-            p[i] = uniform(1, R);
+            w[i] = uniform(rng, 1, R);
+            p[i] = uniform(rng, 1, R);
         } else if (type == "weak") {  // profit close to weight
-            w[i] = uniform(1, R);
-            p[i] = max(1LL, uniform(w[i] - gap, w[i] + gap));
+            w[i] = uniform(rng, 1, R);
+            p[i] = max(1LL, uniform(rng, w[i] - gap, w[i] + gap));
         } else if (type == "strong") {  // profit = weight + R/10
-            w[i] = uniform(1, R);
+            w[i] = uniform(rng, 1, R);
             p[i] = w[i] + gap;
         } else if (type == "inverse") {  // weight = profit + R/10
-            p[i] = uniform(1, R);
+            p[i] = uniform(rng, 1, R);
             w[i] = p[i] + gap;
         } else if (type == "subset") {  // profit = weight
-            w[i] = uniform(1, R);
+            w[i] = uniform(rng, 1, R);
             p[i] = w[i];
         } else {
             cerr << "unknown type " << type << "\n";

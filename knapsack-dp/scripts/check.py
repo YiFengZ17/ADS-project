@@ -149,6 +149,79 @@ def large_cases(binary, gen):
     return count
 
 
+MASK = (1 << 64) - 1
+
+
+class MT64:
+    """The mt19937_64 engine, written from the C++ standard, to check that gen.cpp is portable."""
+
+    def __init__(self, seed):
+        self.mt = [seed & MASK] + [0] * 311
+        for i in range(1, 312):
+            self.mt[i] = (6364136223846793005 * (self.mt[i - 1] ^ (self.mt[i - 1] >> 62)) + i) & MASK
+        self.i = 312
+
+    def __call__(self):
+        if self.i >= 312:
+            for k in range(312):
+                y = (self.mt[k] & 0xFFFFFFFF80000000) | (self.mt[(k + 1) % 312] & 0x7FFFFFFF)
+                self.mt[k] = self.mt[(k + 156) % 312] ^ (y >> 1) ^ (0xB5026F5AA96619E9 if y & 1 else 0)
+            self.i = 0
+        y = self.mt[self.i]
+        self.i += 1
+        y ^= (y >> 29) & 0x5555555555555555
+        y ^= (y << 17) & 0x71D67FFFEDA60000
+        y ^= (y << 37) & 0xFFF7EEE000000000
+        return (y ^ (y >> 43)) & MASK
+
+
+def python_gen(n, R, kind, seed):
+    """The same rules as code/gen.cpp, used to check that its output does not depend on the compiler."""
+    rng = MT64(seed)
+
+    def uniform(lo, hi):
+        size = hi - lo + 1
+        limit = MASK - MASK % size
+        x = rng()
+        while x >= limit:
+            x = rng()
+        return lo + x % size
+
+    gap = max(1, R // 10)
+    items = []
+    for _ in range(n):
+        if kind == 'uncorrelated':
+            w = uniform(1, R)
+            p = uniform(1, R)
+        elif kind == 'weak':
+            w = uniform(1, R)
+            p = max(1, uniform(w - gap, w + gap))
+        elif kind == 'strong':
+            w = uniform(1, R)
+            p = w + gap
+        elif kind == 'inverse':
+            p = uniform(1, R)
+            w = p + gap
+        else:
+            w = uniform(1, R)
+            p = w
+        items.append((w, p))
+    c = int(0.5 * sum(w for w, _ in items))
+    return instance_text(c, items)
+
+
+def portable_generator(gen):
+    """gen.cpp must print exactly what the Python version of the standard engine gives."""
+    count = 0
+    for kind in ('uncorrelated', 'weak', 'strong', 'inverse', 'subset'):
+        for n, R, seed in ((1, 1, 0), (20, 7, 1), (500, 1000, 2), (300, 100000000, 3)):
+            text = subprocess.run([str(gen), str(n), str(R), kind, str(seed)],
+                                  capture_output=True, text=True, check=True).stdout
+            assert text == python_gen(n, R, kind, seed), f'generator differs: {kind} {n} {R} {seed}'
+            count += 1
+    return count
+
+
 def bad_inputs(binary):
     """The program must reject malformed input instead of guessing."""
     for text in ('2 5\n1 1\n', '1 5\n0 3\n', '1 -1\n1 1\n', '1 5\n2 -4\n', ''):
@@ -170,6 +243,7 @@ def main():
         ('many small items vs Python DP', lambda: many_small_items(args.binary, 50 if args.quick else 200, rng)),
         ('generated instances', lambda: generated(args.binary, args.gen, args.quick)),
         ('bad inputs rejected', lambda: bad_inputs(args.binary)),
+        ('generator matches the C++ standard engine', lambda: portable_generator(args.gen)),
     ]
     if not args.quick:
         groups.append(('large instances, algorithms agree', lambda: large_cases(args.binary, args.gen)))

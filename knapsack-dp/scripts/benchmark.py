@@ -10,7 +10,9 @@ DATA = ROOT / 'data'
 TYPES = ('uncorrelated', 'weak', 'strong', 'inverse', 'subset')
 SEEDS = (1, 2, 3)
 RUNS = 10            # measured runs after one warmup
-SKIP_MS = 500        # stop growing the input for an algorithm once its median passes this
+# stop growing the input for an algorithm once its median work passes this limit;
+# work does not depend on the machine, and each limit is about half a second on our machine
+WORK_LIMIT = {'dp1': 2e9, 'lists': 1e8, 'lists-sorted': 1e8, 'bounds': 3e7, 'small': 3e7}
 # each experiment: the parameter that grows, its values, the fixed parameters and the algorithms
 EXPERIMENTS = {
     'size': {'vary': 'n', 'values': (250, 500, 1000, 2000, 4000), 'fixed': {'R': 1000},
@@ -73,11 +75,11 @@ def run(name):
                     print(f"{name} {kind} {exp['vary']}={value} seed {seed} {algorithm}: "
                           f"{row['median_ms']:.3f} ms, work {row['work']}", flush=True)
                 assert len(set(answers.values())) <= 1, f'algorithms disagree: {answers}'
-            # an algorithm whose median over the seeds is already slow is not run on larger inputs
+            # an algorithm whose median work over the seeds is already large is not run on larger inputs
             for algorithm in exp['algorithms']:
-                times = [r['median_ms'] for r in rows if r['type'] == kind and r['algorithm'] == algorithm
+                works = [r['work'] for r in rows if r['type'] == kind and r['algorithm'] == algorithm
                          and r['n'] == params['n'] and r['R'] == params['R']]
-                if times and statistics.median(times) > SKIP_MS:
+                if works and statistics.median(works) > WORK_LIMIT[algorithm]:
                     skipped.add(algorithm)
     DATA.mkdir(exist_ok=True)
     (DATA / f'{name}.json').write_text(json.dumps(rows, indent=1) + '\n')
