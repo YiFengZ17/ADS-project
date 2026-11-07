@@ -38,7 +38,7 @@ The output should be the same as above, with no sanitizer messages. This is a sm
 
 ## Generate data and time an algorithm
 
-`gen.cpp` takes `n R type seed [ratio]` and prints one instance. `type` is `uncorrelated`, `weak`, `strong`, `inverse` or `subset`; weights are about 1 to `R`, and the capacity is `ratio` (default 0.5) times the total weight. The same arguments always give the same instance.
+`gen.cpp` takes `n R type seed [ratio]` and prints one instance. `type` is `uncorrelated`, `weak`, `strong`, `inverse` or `subset`; weights are about 1 to `R`, and the capacity is `ratio` (default 0.5) times the total weight. The same arguments always give the same instance, with any compiler and standard library, because the generator only uses the output of `mt19937_64`, which the C++ standard fixes.
 
 `bench.cpp` takes `algorithm file [runs]`. It runs the algorithm once as warmup and then `runs` times (default 10), timing only the algorithm and not the input reading. It prints one line: `algorithm n c wmax value work median_ms min_ms max_ms`, where `work` is the number of DP cells (dp1), list states (list methods) or convolution entries (small).
 
@@ -50,8 +50,8 @@ g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic code/bench.cpp code/knapsack.cpp -o 
 "$ADS_RUN_DIR/bench" bounds "$ADS_RUN_DIR/strong.in"
 ```
 
-The report's experiments use the five types, seeds 1 to 3, one warmup and 10 measured runs per input, and give the median. The sizes of each experiment are listed in the report. New timings depend on the machine.
+The report's experiments use the five types, seeds 1 to 3, one warmup and 10 measured runs per input, and give the median. The sizes of each experiment are listed in the report. The `work` values should match the report on any machine; the times depend on the machine.
 
 ## Full checks
 
-The brute-force comparison, the independent Python DP and the scripts that run all experiments and draw the figures are kept in the authors' working directory and are not part of this bundle. There, the full suite checks 3,312 cases in a release build and 586 cases in an ASan/UBSan build.
+The brute-force comparison, the independent Python DP and the scripts that run all experiments and draw the figures are kept in the authors' working directory and are not part of this bundle. There, the full suite checks 3,332 cases in a release build and 606 cases in an ASan/UBSan build.

@@ -16,6 +16,7 @@ const ll MAX_CAPACITY = 1000000000000000000LL;
 const ll SMALL_MAX_WEIGHT = 2000;            // the bonus method needs arrays of size 2w^2
 const ll NEG = LLONG_MIN / 4;                // marks a weight that no subset reaches
 
+// read "n c" and the items; reject sizes and values outside the allowed range
 bool read_instance(istream &is, Instance &in) {
     ll n;
     if (!(is >> n >> in.c)) return false;
@@ -28,9 +29,7 @@ bool read_instance(istream &is, Instance &in) {
     return true;
 }
 
-// ---------- DP-1 ----------
-
-// DP-1 from class with one row: z[d] is the best profit for capacity d using the items so far
+// DP-1 from class, kept in one row: z[d] is the best profit for capacity d using the items so far
 Result dp1(const Instance &in) {
     ll c = in.c;
     vector<ll> z(c + 1, 0);  // row 0: no items, profit 0 for every capacity
@@ -43,8 +42,6 @@ Result dp1(const Instance &in) {
     }
     return {z[c], work};
 }
-
-// ---------- DP-with-Lists (Section 3.4) ----------
 
 struct State {
     ll w, p;  // weight sum and profit sum of one partial solution
@@ -59,7 +56,8 @@ static void add_item(const vector<State> &list, const Item &it, ll c, vector<Sta
     }
 }
 
-// merge two lists sorted by weight and keep only undominated states (Merge-Lists in [1])
+// merge two lists sorted by weight and drop every state that another state beats
+// (Merge-Lists in Fig. 3.6 of Kellerer, Pferschy and Pisinger)
 static void merge_lists(const vector<State> &a, const vector<State> &b, vector<State> &out) {
     out.clear();
     size_t i = 0, j = 0;
@@ -73,7 +71,8 @@ static void merge_lists(const vector<State> &a, const vector<State> &b, vector<S
     }
 }
 
-// DP-with-Lists: the same recursion as DP-1, but only undominated (weight, profit) pairs are stored
+// DP-with-Lists (Section 3.4 of the book): the same recursion as DP-1, but each row only keeps
+// the (weight, profit) pairs that no lighter pair beats
 Result dp_lists(const Instance &in) {
     vector<State> list = {{0, 0}}, shifted, merged;
     ll work = 1;
@@ -85,8 +84,6 @@ Result dp_lists(const Instance &in) {
     }
     return {list.back().p, work};  // the heaviest state also has the largest profit
 }
-
-// ---------- DP-with-Upper-Bounds (Section 3.5) ----------
 
 // true if a has a larger profit per unit of weight than b, compared without division
 static bool more_efficient(const Item &a, const Item &b) {
@@ -102,8 +99,8 @@ static vector<Item> sorted_by_efficiency(const Instance &in) {
     return items;
 }
 
-// DP-with-Lists on items in efficiency order; a state is dropped when its LP upper bound
-// can not beat the best solution found so far
+// DP-with-Upper-Bounds (Section 3.5 of the book): DP-with-Lists on items sorted by efficiency,
+// dropping every state whose upper bound can not beat the best solution found so far
 Result dp_bounds(const Instance &in) {
     vector<Item> items = sorted_by_efficiency(in);
     size_t n = items.size();
@@ -114,7 +111,7 @@ Result dp_bounds(const Instance &in) {
         W[k + 1] = W[k] + items[k].w;
         P[k + 1] = P[k] + items[k].p;
     }
-    // the greedy solution gives the first incumbent z
+    // the greedy solution gives the first value of z, the best profit found so far
     ll z = 0, room = c;
     for (const Item &it : items) {
         if (it.w <= room) {
@@ -123,8 +120,8 @@ Result dp_bounds(const Instance &in) {
         }
     }
 
-    // LP bound of a state that has used items 1..j: fill the room c - w with items j+1, j+2, ...
-    // in order, and take the first item that does not fit only in part
+    // upper bound of a state after items 1..j: fill the room c - w with items j+1, j+2, ... in order,
+    // and take the first item that does not fit only in part
     auto bound = [&](size_t j, const State &s) {
         ll target = W[j] + (c - s.w);
         size_t k = upper_bound(W.begin() + j, W.end(), target) - W.begin() - 1;  // items j+1..k fit
@@ -147,10 +144,8 @@ Result dp_bounds(const Instance &in) {
     return {z, work};
 }
 
-// ---------- O(n + w^3) algorithm for small weights (bonus) ----------
-
-// row maxima of an implicit totally monotone matrix by the SMAWK algorithm [4];
-// ties go to the rightmost column, and ans[r] gets the chosen column of row r
+// SMAWK (Aggarwal et al. 1987): the largest entry of every row, for a matrix whose row maxima move
+// right from row to row; ans[r] gets the column for row r, the rightmost one on ties
 template <class F>
 static void smawk(const vector<int> &rows, const vector<int> &cols, F &val, vector<int> &ans) {
     if (rows.empty()) return;
@@ -183,8 +178,8 @@ static void smawk(const vector<int> &rows, const vector<int> &cols, F &val, vect
     }
 }
 
-// out[i] = max over j of a[j] + b[i - j], where b is concave and a may contain NEG;
-// the matrix of these sums is Monge, so SMAWK finds all row maxima in linear time [3]
+// out[i] = max over j of a[j] + b[i - j], where the steps of b never grow (b is concave);
+// then the best j moves right as i grows, so SMAWK finds all of them in linear time
 static void concave_convolution(const vector<ll> &a, const vector<ll> &b, vector<ll> &out) {
     int len = (int)a.size(), m = (int)b.size() - 1;
     const i128 BIG = (i128)1 << 70;    // slope outside b, steeper than any real profit
@@ -211,8 +206,8 @@ static void concave_convolution(const vector<ll> &a, const vector<ll> &b, vector
     }
 }
 
-// best total value for every exact weight 0..T; values may be negative.
-// Items of the same weight h are added together by one concave convolution per residue mod h
+// best total value for every exact weight 0..T (values may be negative); all items of one weight h
+// are added together, with one call of concave_convolution for each remainder mod h
 static vector<ll> best_exact(const vector<Item> &items, ll smax, ll T, ll &work) {
     vector<ll> f(T + 1, NEG);
     f[0] = 0;
@@ -239,8 +234,8 @@ static vector<ll> best_exact(const vector<Item> &items, ll smax, ll T, ll &work)
     return f;
 }
 
-// maximal prefix: take items by decreasing efficiency until the next one does not fit.
-// Quickselect finds it in expected O(n) time without sorting all items
+// greedy prefix: take items by decreasing efficiency until the next one does not fit;
+// found like quickselect in expected O(n) time, without sorting all items
 static vector<char> maximal_prefix(const vector<Item> &items, ll c) {
     size_t n = items.size();
     vector<int> idx(n);
@@ -277,9 +272,8 @@ static vector<char> maximal_prefix(const vector<Item> &items, ll c) {
     return in_prefix;
 }
 
-// algorithm of Polak, Rohwedder and Wegrzycki [3]: an optimal solution differs from the
-// maximal prefix in at most 2w items, so we only fix the prefix by removing and adding
-// items of total weight at most 2w^2
+// bonus method of Polak, Rohwedder and Wegrzycki (2021): some optimal solution differs from the
+// greedy prefix in at most 2w items, so we only remove and add items of total weight at most 2w^2
 Result small_items(const Instance &in) {
     vector<Item> items;
     ll total_w = 0, total_p = 0, s = 0;
@@ -321,13 +315,13 @@ Result small_items(const Instance &in) {
     return {prefix_p + best, work};
 }
 
-// ---------- algorithm selection ----------
-
+// names of all algorithms, in the order used by "all"
 const vector<string> &algorithm_names() {
     static const vector<string> names = {"dp1", "lists", "lists-sorted", "bounds", "small"};
     return names;
 }
 
+// run one algorithm by name; refuse inputs that would need too much memory
 bool run_algorithm(const string &name, const Instance &in, Result &out, string &error) {
     if (name == "dp1") {
         if (in.c > DP1_MAX_CAPACITY) {

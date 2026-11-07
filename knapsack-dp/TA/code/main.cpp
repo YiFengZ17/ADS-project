@@ -1,11 +1,9 @@
-// Solve one knapsack instance read from standard input.
-// Usage: ./knapsack [dp1|lists|lists-sorted|bounds|small|all] < instance
-// One algorithm prints its optimal value; "all" prints "name value" for every algorithm.
-
 #include "knapsack.h"
 
 using namespace std;
 
+// usage: ./knapsack [dp1|lists|lists-sorted|bounds|small|all] < instance
+// one name prints the optimal value; "all" prints "name value" for every algorithm
 int main(int argc, char **argv) {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);

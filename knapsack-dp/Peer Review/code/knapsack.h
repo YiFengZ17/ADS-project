@@ -28,7 +28,7 @@ const ll DP1_MAX_CAPACITY = 200000000;
 bool read_instance(std::istream &is, Instance &in);
 
 Result dp1(const Instance &in);           // standard DP from class, Theta(nc)
-Result dp_lists(const Instance &in);      // Section 3.4: lists of undominated states
+Result dp_lists(const Instance &in);      // Section 3.4: lists of useful (weight, profit) states
 Result dp_bounds(const Instance &in);     // Section 3.5: lists plus upper bounds
 Result small_items(const Instance &in);   // bonus: O(n + w^3) for small weights
 
