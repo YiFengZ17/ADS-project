@@ -24,7 +24,7 @@ printf '4 30\n12 20 15 10\n9 6 8 7\n' > "$ADS_RUN_DIR/sample.in"
 "$ADS_RUN_DIR/coupons" brute < "$ADS_RUN_DIR/sample.in"
 ```
 
-The input is `N D` on the first line, then `N` prices and then `N` coupon values. The program prints the largest number of items and the money left. With no argument it uses the heap method; `search` is the threshold method and `brute` is brute force (only for `N <= 5000`). All three lines above should be `8 2`.
+The input is `N D` on the first line, then `N` prices and then `N` coupon values. The program prints the largest number of items and the money left. With no argument it uses the heap method; `search` is the binary search method and `brute` is brute force (only for `N <= 5000`). All three lines above should be `8 2`.
 
 ## Sanitizer check
 

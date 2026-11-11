@@ -85,7 +85,7 @@ static bool can_buy_all_up_to(const vector<ll> &price, const vector<ll> &coupon,
     return true;
 }
 
-// threshold method: binary search for the largest t such that we can pay for every pair
+// binary search method: find the largest t such that we can pay for every pair
 // with cost <= t, then spend the rest of the money on pairs with cost t + 1
 Answer solve_search(const vector<ll> &price, const vector<ll> &coupon, ll d) {
     size_t n = price.size();

@@ -19,7 +19,7 @@ EXPERIMENTS = {
               'fixed': {'n': 100000}, 'types': ('random', 'close', 'equal'),
               'methods': ('heap', 'search')},
 }
-LABELS = {'brute': 'Brute force', 'heap': 'Heap method', 'search': 'Threshold method'}
+LABELS = {'brute': 'Brute force', 'heap': 'Heap method', 'search': 'Binary search method'}
 # colors checked with the dataviz palette validator (all pairs pass)
 STYLE = {'heap': ('#2a78d6', 'o'), 'search': ('#eb6834', 's'), 'brute': ('#1baf7a', '^')}
 

@@ -23,7 +23,7 @@ python3 scripts/build_report.py --compile --anonymous
 make package-code
 ```
 
-另按 `TA/README.md` 在提交目录中逐条执行编译、样例、sanitizer、生成器和计时命令，输出正常。实名和匿名 PDF 均为 11 页，逐页渲染检查了目录、表格、图和分页；匿名 PDF 与 `Peer Review/README.md` 不含姓名、组号。生成器另用 Clang + libc++ 编译，与 GCC 版本的输出逐字节一致。
+另按 `TA/README.md` 在提交目录中逐条执行编译、样例、sanitizer、生成器和计时命令，输出正常。实名和匿名 PDF 均为 10 页，逐页渲染检查了目录、表格、图和分页；匿名 PDF 与 `Peer Review/README.md` 不含姓名、组号。生成器另用 Clang + libc++ 编译，与 GCC 版本的输出逐字节一致。
 
 ## 需要审阅者留意
 
@@ -36,3 +36,13 @@ make package-code
 
 - YuJie Sun 的独立复现审批。
 - 在线评测的提交结果。
+
+## 同日修订：按用户意见简化报告
+
+YiFeng Zheng 认为初版报告偏专业、偏细，要求写得更像大二学生的手笔。本轮只改报告文字和一处代码注释，求解逻辑与测试数据不变：
+
+- Introduction 改为直接用题面样例讲清题意，再说明难点；
+- 算法一章去掉花费表格，用文字说明"每件商品的组合从便宜到贵排成一列"；"Threshold method"改名为"Binary search method"（图例、提交 README 和 `main.cpp` 的一行注释同步改名）；
+- Correctness 改为说明大意，不追求严格证明；测试表的 Purpose、复杂度和结果讨论都改短；
+- 报告由 11 页减到 10 页；重新运行 `make check`、`make sanitize`、`make package-code` 并重建两份 PDF。
+
