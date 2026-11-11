@@ -13,7 +13,7 @@ We have $N$ items, $N$ kinds of coupons and $D$ dollars, and we want to buy as m
 
 # Introduction
 
-In the problem "Shopping With Coupons", there are $N$ items on a shopping list and $N$ kinds of coupons, and we have $D$ dollars. We may buy any item many times and use any coupon many times, but a coupon can be used on the same item only once. For example, we may buy item B1 with coupon A1 and then with coupon A2, but not with A1 again. So every (item, coupon) pair is one possible purchase. It costs the price of the item minus the value of the coupon, and it can be made at most once. The largest coupon is smaller than the lowest price, so every purchase costs at least 1 dollar. We want to buy as many items as possible, and with that number of items we want as much money left as possible. As in the example of the problem, we assume that every purchase uses one coupon, so there are at most $N^2$ purchases.
+In the problem "Shopping With Coupons", there are $N$ items on a shopping list and $N$ kinds of coupons, and we have $D$ dollars. We may buy any item many times and use any coupon many times, but a coupon can be used on the same item only once. For example, we may buy item B1 with coupon A1 and then with coupon A2, but not with A1 again. So every (item, coupon) pair is one possible purchase. It costs the price of the item minus the value of the coupon, and it can be made at most once. The largest coupon is smaller than the lowest price, so every purchase costs at least 1 dollar. We want to buy as many items as possible, and with that number of items we want as much money left as possible.
 
 The input gives $N$ ($\leq10^5$) and $D$ ($\leq10^6$) on the first line, then $N$ prices on the second line and $N$ coupon values on the third line. All numbers are positive integers up to $10^9$. The output is one line with the largest number of items and the largest amount of money left, separated by one space.
 
@@ -163,8 +163,7 @@ For the limits of the problem both methods are fast enough: the slowest case we 
 ## Limitations and Improvements
 
 1. The time of the heap method grows with the number of items bought. If $D$ were much larger than $10^6$, it would become slow, and the threshold method should be used instead.
-2. We assume that every purchase uses a coupon. If buying without a coupon were also allowed, the program would need one more step after all pairs are used: spend the rest of the money on the cheapest item at full price.
-3. All timings come from one machine with three inputs per setting. On most inputs sorting takes most of the time, so small differences between the two fast methods are within the noise.
+2. All timings come from one machine with three inputs per setting. On most inputs sorting takes most of the time, so small differences between the two fast methods are within the noise.
 
 # Conclusion
 
