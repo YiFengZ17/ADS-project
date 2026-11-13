@@ -15,3 +15,5 @@
 - 报告中的计时结论是否有实测数据支持。计时来自一台 Linux 机器（Intel Xeon 2.10 GHz、GCC 13.3.0），换机器后绝对时间会变，相对快慢应一致。
 
 2026-11-11：作者侧完成与自查记录见 [2026-11-11-author-check.md](2026-11-11-author-check.md)。
+
+2026-11-13：提交前复查记录（Claude 按 YiFeng Zheng 要求执行，不代替 YuJie Sun 审批）见 [2026-11-13-claude-check.md](2026-11-13-claude-check.md)。
