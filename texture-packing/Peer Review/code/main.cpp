@@ -12,7 +12,10 @@ typedef long long ll;
 
 const ll MAX_N = 1000000;        // largest number of textures we accept
 const ll MAX_SIDE = 1000000000;  // largest width or height we accept, so all sums fit in ll
+const double MIN_RUN_MS = 1.0;   // a timed run shorter than this is repeated
+const int MAX_REPEAT = 100000;   // upper limit on the repeats of one short run
 
+// width and height of one texture
 struct Rect {
     ll w, h;
 };
@@ -63,6 +66,7 @@ struct LevelTree {
     int size;
     vector<ll> best;
 
+    // room for n levels, all not opened yet
     LevelTree(int n) {
         size = 1;
         while (size < n) size *= 2;
@@ -203,6 +207,7 @@ ll lower_bound_height(const vector<Rect> &r, ll W) {
     return max({(area + W - 1) / W, tallest, wide});
 }
 
+// every algorithm takes the textures and W and returns a packing
 typedef Packing (*Algorithm)(const vector<Rect> &, ll);
 
 // find an algorithm by its name, or return nullptr
@@ -235,7 +240,8 @@ void time_algorithm(Algorithm algo, const string &name, const vector<Rect> &r, l
     auto start = clock::now();
     Packing p = algo(r, W);  // warmup, also gives the answer we print
     double once = chrono::duration<double, milli>(clock::now() - start).count();
-    int repeat = once >= 1.0 ? 1 : (int)min(100000.0, 1.0 / max(once, 1e-6)) + 1;
+    int repeat = 1;
+    if (once < MIN_RUN_MS) repeat = (int)min((double)MAX_REPEAT, MIN_RUN_MS / max(once, 1e-6)) + 1;
     vector<double> times;
     ll check = 0;  // keeps the compiler from skipping the repeated calls
     for (int run = 0; run < runs; run++) {
@@ -250,6 +256,7 @@ void time_algorithm(Algorithm algo, const string &name, const vector<Rect> &r, l
          << median << ' ' << times.front() << ' ' << times.back() << '\n';
 }
 
+// read the input, run the chosen algorithm, and print the packing or the timing line
 int main(int argc, char **argv) {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);

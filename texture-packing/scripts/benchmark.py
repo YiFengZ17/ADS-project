@@ -84,6 +84,7 @@ def summary(rows, key):
 
 
 def setup_axis(ax, title):
+    """Common look of one panel: title, small ticks, light grid, no top/right lines."""
     ax.set_title(title, fontsize=9)
     ax.tick_params(labelsize=7)
     ax.grid(True, which='major', color='#e4e4e0', linewidth=0.6)
@@ -206,6 +207,7 @@ def tables(size_rows, width_rows):
 
 
 def main():
+    """Run the two experiments (or load them), then draw the figures and print the tables."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--plot-only', action='store_true', help='redraw from data/*.json')
     args = parser.parse_args()

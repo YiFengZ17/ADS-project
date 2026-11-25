@@ -31,7 +31,7 @@ We first sort the textures by height from tall to short (equal heights go wider 
 
 ## FFDH, Our Algorithm
 
-**Why.** The simplest rule (NFDH, see 2.3) only looks at the newest level. When a texture does not fit there, the space left on all older levels is lost for ever. FFDH [1] fixes this: a short texture that comes later can still go back down to an old level that has a gap at its right end.
+**Why.** The simplest rule (NFDH, see 2.3) only looks at the newest level. When a texture does not fit there, the space left on all older levels is lost forever. FFDH [1] fixes this: a short texture that comes later can still go back down to an old level that has a gap at its right end.
 
 **Rule.** Take the textures from tall to short. Put each one on the lowest level that still has enough free width. If no level has room, open a new level on top and put the texture there; the new level is as tall as this texture.
 
@@ -43,7 +43,7 @@ We first sort the textures by height from tall to short (equal heights go wider 
 
 For example, let $W=10$ and the levels have free widths $3, 0, 6, 5$. The root stores 6, the left child $\max(3,0)=3$ and the right child $\max(6,5)=6$. For a texture with $w=4$ the left child is too small, so we go right and then left, and reach level 3. This is exactly the first level from the bottom with free width at least 4.
 
-Both the search and the update walk one path of the tree, so each takes $O(\log n)$ steps. We also kept the plain version that scans the levels one by one (`ffdh-scan`). It gives exactly the same packing and we use it to measure what the tree saves.
+Both the search and the update walk one path of the tree, so each takes $O(\log n)$ steps. We also wrote a plain version that scans the levels one by one (`ffdh-scan`). It gives exactly the same packing and we use it to measure what the tree saves.
 
 ## Other Strip Algorithms for Comparison
 
@@ -126,26 +126,20 @@ All large inputs come from our generator `code/gen.cpp`. The strip width is alwa
 
 ## Run Time
 
-The program runs one algorithm once to warm up and then 10 more times, and takes the median. A run that is shorter than 1 ms is repeated until it takes 1 ms, and we divide by the number of repeats. We time only the algorithm with its sorting, not reading the input. For every setting we use three seeds and report the median of the three. The plain-scan FFDH is only run up to $n=3\times10^4$.
+The program runs one algorithm once to warm up and then 10 more times, and takes the median. A run that is shorter than 1 ms is repeated until it takes 1 ms, and we divide by the number of repeats. We time only the algorithm with its sorting, not the program start-up or reading the input. For every setting we use three seeds and report the median of the three. The plain-scan FFDH is only run up to $n=3\times10^4$.
 
-**Table 1.** Median time in µs on uniform data.
+**Table 1.** Median time in µs. The first five rows are all algorithms on uniform data; the last three are FFDH on the other types. "scan" is the plain-scan FFDH.
 
-| Algorithm | $n=10$ | $n=100$ | $n=1000$ | $n=10^4$ | $n=10^5$ |
-| --- | --- | --- | --- | --- | --- |
-| FFDH (ours, tree) | 0.33 | 3.31 | 41.2 | 651 | 10,400 |
-| FFDH, plain scan | 0.24 | 2.35 | 80.4 | 5,930 | – |
-| NFDH | 0.063 | 1.36 | 12.9 | 241 | 6,140 |
-| BFDH | 0.44 | 4.33 | 51.2 | 1,140 | 16,500 |
-| Sleator | 0.15 | 1.58 | 13.3 | 276 | 6,160 |
-
-**Table 2.** Median time of FFDH in µs on each data type.
-
-| Type | $n=10$ | $n=100$ | $n=1000$ | $n=10^4$ | $n=10^5$ |
-| --- | --- | --- | --- | --- | --- |
-| uniform | 0.33 | 3.31 | 41.2 | 651 | 10,400 |
-| equalh | 0.32 | 3.37 | 37.5 | 570 | 8,400 |
-| heavy | 0.35 | 3.39 | 39.4 | 744 | 10,300 |
-| cut | 0.27 | 4.38 | 53.1 | 856 | 12,700 |
+| Algorithm | Data | $n=10$ | $n=100$ | $n=1000$ | $n=10^4$ | $n=10^5$ |
+| --- | --- | --- | --- | --- | --- | --- |
+| FFDH | uniform | 0.33 | 3.31 | 41.2 | 651 | 10,400 |
+| scan | uniform | 0.24 | 2.35 | 80.4 | 5,930 | – |
+| NFDH | uniform | 0.063 | 1.36 | 12.9 | 241 | 6,140 |
+| BFDH | uniform | 0.44 | 4.33 | 51.2 | 1,140 | 16,500 |
+| Sleator | uniform | 0.15 | 1.58 | 13.3 | 276 | 6,160 |
+| FFDH | equalh | 0.32 | 3.37 | 37.5 | 570 | 8,400 |
+| FFDH | heavy | 0.35 | 3.39 | 39.4 | 744 | 10,300 |
+| FFDH | cut | 0.27 | 4.38 | 53.1 | 856 | 12,700 |
 
 Figure 1 shows the times of all algorithms for 12 sizes from 10 to $10^5$. Both axes are on a log scale, so a straight line of slope 1 means linear growth and slope 2 means quadratic growth. The error bars show the fastest and the slowest of the three seeds.
 
@@ -153,7 +147,7 @@ Figure 1 shows the times of all algorithms for 12 sizes from 10 to $10^5$. Both 
 
 ## Packing Quality
 
-**Table 3.** Height divided by the lower bound, mean of three seeds. For the cut type this is the real ratio $H/OPT$.
+**Table 2.** Height divided by the lower bound, mean of three seeds. For the cut type this is the real ratio $H/OPT$.
 
 | Type | Algorithm | $n=10$ | $n=100$ | $n=1000$ | $n=10^4$ |
 | --- | --- | --- | --- | --- | --- |
@@ -191,7 +185,7 @@ Sorting the textures takes $O(n\log n)$ [3, ch. 2]. In FFDH there are at most $n
 
 The plain-scan FFDH checks up to $L$ levels for each texture, where $L$ is the number of levels, so it takes $O(n\log n+nL)$. In the worst case, for example when every texture is wider than $W/2$, $L=n$ and this is $O(n^2)$. NFDH only looks at the newest level, so after sorting it is $O(n)$, and the total is $O(n\log n)$. BFDH does one search, one removal and one insertion in a balanced search tree per texture, $O(\log n)$ each [3, ch. 13], so it is also $O(n\log n)$. Sleator's algorithm sorts once and then places each texture in $O(1)$ time, so it is $O(n\log n)$ as well [2].
 
-The measured times agree with this. From $n=10^3$ to $10^4$ FFDH becomes 15 to 19 times slower, and from $10^4$ to $10^5$ 14 to 16 times slower, depending on the data type. $n\log n$ grows by about 13 times for each step; the small extra is probably because larger inputs no longer fit in the fast cache. In contrast, the plain scan on uniform data goes from 80.4 µs to 5,930 µs from $n=10^3$ to $10^4$ (74 times) and to 51,700 µs at $3\times10^4$ (8.7 times for 3 times more textures), which is the quadratic growth we expect when $L$ grows with $n$. At $n=10^4$ the tree is 9 times faster on uniform data. On cut data it is only 1.7 times faster, because the pieces are only about 100 wide, about ten of them share a level and there are far fewer levels to scan. For $n\leq100$ the plain scan is a little faster, because there are only a few levels and the tree costs more to set up.
+The measured times agree with this. From $n=10^3$ to $10^4$ FFDH becomes 15 to 19 times slower, and from $10^4$ to $10^5$ 14 to 16 times slower, depending on the data type. $n\log n$ grows by about 13 times for each step, so the growth is close to $n\log n$; the small extra is probably cache misses on larger inputs. In contrast, the plain scan on uniform data goes from 80.4 µs to 5,930 µs from $n=10^3$ to $10^4$ (74 times) and to 51,700 µs at $3\times10^4$ (8.7 times for 3 times more textures), which is the quadratic growth we expect when $L$ grows with $n$. At $n=10^4$ the tree is 9 times faster on uniform data. On cut data it is only 1.7 times faster, because the pieces are only about 100 wide, about ten of them share a level and there are far fewer levels to scan. For $n\leq100$ the plain scan is a little faster, because there are only a few levels and the tree costs more to set up.
 
 NFDH and Sleator are the fastest, at about 6 ms for $10^5$ textures; their time is almost only the sorting. On uniform, equalh and heavy data BFDH is the slowest, 1.3 to 1.8 times slower than FFDH, because a balanced search tree is slower than our array-based tree. On cut data, with few levels, the set stays small and BFDH is about as fast as FFDH. All the algorithms handle $10^5$ textures in less than 20 ms.
 
@@ -207,7 +201,7 @@ All algorithms store the textures, the sorted order and the output corners, whic
 
 **Distribution of heights.** When all heights are equal (equalh), a level wastes nothing above its textures, and FFDH becomes first-fit decreasing bin packing; it reaches 1.003 at $n=10^4$. With uniform heights, every texture shorter than its level's first texture leaves empty space above it, so the ratio is higher (1.026). The heavy type has a few very tall textures; for small $n$ they make tall levels that are hard to fill (1.357 at $n=10$), but for large $n$ there are enough short textures to fill them (1.023 at $n=10^4$).
 
-**Distribution of widths.** Figure 3 shows that narrow textures are easy: with $w_{\max}=200$ or 300 FFDH is within 1.4% of the lower bound. With $w_{\max}=1000$ it rises to 5.6%, because a level that holds only one or two wide textures may leave a gap that no later texture fits. Very narrow textures ($w_{\max}=50$) are a little worse again (4.0%). Here the height, not the width, is the problem: about 40 textures share each level, so each level has many textures much shorter than its first one. Also, the whole packing is low ($LB\approx12{,}800$), so the last, partly filled level of height up to 1000 counts more.
+**Distribution of widths.** Figure 3 shows that narrow textures are easy: with $w_{\max}=200$ or 300 FFDH is within 1.4% of the lower bound. With $w_{\max}=1000$ it rises to 5.6%, because a level that holds only one or two wide textures may leave a gap that no later texture fits. Very narrow textures ($w_{\max}=50$) are a little worse again (4.0%): about 40 textures share each level, so many of them are much shorter than the first one, and the whole packing is low ($LB\approx12{,}800$), so the last, partly filled level counts more.
 
 **The lower bound itself.** For the uniform, equalh and heavy types the ratio is measured against $LB$, not $OPT$, so the real ratio may be smaller. On cut data, where $LB=OPT$, FFDH is still within 1.2% at $n=10^4$, which suggests that $LB$ is quite close to $OPT$ for large random inputs.
 

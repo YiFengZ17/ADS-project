@@ -35,3 +35,15 @@ make package-code
 ## 仍未完成
 
 - YiFeng Zheng 的独立复现审批。
+
+## 按 AGENT.md / STYLE.md 复查（同日）
+
+逐条对照根目录 `AGENT.md` 和 `STYLE.md` 复查后修改：
+
+- 报告：两张计时表合并为一张（STYLE "一个表加一张图"），质量表顺延为 Table 2；计时说明补"不含程序启动"；去掉 "kept" 这类暗示修改历史的说法；压缩两段过长的讨论；改正 "for ever"。
+- 排版：`scripts/build_report.py` 让 "**Table N.**" 标题段与其后的表格保持同页，并给 "Packing Quality" 标题预留空间，避免标题孤悬页底。实名 15 页、匿名 14 页，无 Overfull，逐页渲染检查。
+- 代码：`Rect`、`LevelTree` 构造函数、`Algorithm` 类型和两个 `main` 补注释；`gen.cpp` 文件头缩为 4 行；计时重复次数与生成器中的 100、10、10^6、10^9 等改为命名常量。生成数据与修改前逐字节相同。
+- 脚本：`check.py`、`benchmark.py` 中缺注释的函数补一行说明。
+- 文献 [2] 的作者名按 Crossref 记录（given "Daniel D.K.D.B."）保留为 "D. D. K. D. B. Sleator"；DBLP 与出版社页面本次未能打开核对。
+
+复查后重新执行 `make check`（1,203 PASS）、`make sanitize`（217 PASS）、两份 PDF 构建、`make package-code`，并在 TA 副本中重跑 README 命令，输出与之前一致。报告中的计时数值未改动。

@@ -1,8 +1,6 @@
-// Test data generator. Usage: ./gen n type seed [wmax hmax]   (strip width W is always 1000)
-// type: uniform (w in [1, wmax], h in [1, hmax]), equalh (w in [1, wmax], every h = hmax),
-//       heavy (w in [1, wmax], h = hmax / k with k in [1, 100]: many short, a few tall),
-//       cut (a 1000 x 10n rectangle cut into n pieces, so the best height is exactly 10n)
-// Defaults: wmax = 1000, hmax = 1000. Prints "n W", then n lines "w h".
+// Test data generator. Usage: ./gen n uniform|equalh|heavy|cut seed [wmax hmax]
+// Prints "n W" (W = 1000), then n lines "w h"; wmax and hmax are 1000 by default.
+// cut cuts a 1000 x 10n rectangle into n pieces, so the best height is exactly 10n.
 // The same arguments give the same data with any compiler.
 
 #include <climits>
@@ -17,7 +15,12 @@ using namespace std;
 
 typedef long long ll;
 
-const ll W = 1000;  // strip width used for all generated data
+const ll W = 1000;               // strip width used for all generated data
+const ll DEFAULT_HMAX = 1000;    // largest height when none is given
+const ll MAX_N = 1000000;        // same limits as the packing program
+const ll MAX_SIDE = 1000000000;
+const ll HEAVY_K = 100;          // heavy heights are hmax / k with k in [1, HEAVY_K]
+const ll CUT_ROW = 10;           // the cut rectangle is CUT_ROW * n high
 
 // random integer in [lo, hi]; we do not use uniform_int_distribution,
 // because GCC and Clang give different numbers with it for the same seed
@@ -34,7 +37,7 @@ vector<pair<ll, ll>> cut_pieces(mt19937_64 &rng, ll n) {
     // (area, id, w, h); the id makes the order strict, so every library pops the same piece
     priority_queue<tuple<ll, ll, ll, ll>> pieces;
     ll next_id = 0;
-    pieces.push(make_tuple(W * 10 * n, next_id++, W, 10 * n));
+    pieces.push(make_tuple(W * CUT_ROW * n, next_id++, W, CUT_ROW * n));
     while ((ll)pieces.size() < n) {
         ll area, id, w, h;
         tie(area, id, w, h) = pieces.top();
@@ -59,6 +62,7 @@ vector<pair<ll, ll>> cut_pieces(mt19937_64 &rng, ll n) {
     return result;
 }
 
+// read the arguments and print one test case
 int main(int argc, char **argv) {
     if (argc != 4 && argc != 6) {
         cerr << "usage: gen n uniform|equalh|heavy|cut seed [wmax hmax]\n";
@@ -68,8 +72,8 @@ int main(int argc, char **argv) {
     string type = argv[2];
     mt19937_64 rng((unsigned long long)atoll(argv[3]));
     ll wmax = argc == 6 ? atoll(argv[4]) : W;
-    ll hmax = argc == 6 ? atoll(argv[5]) : 1000;
-    if (n < 1 || n > 1000000 || wmax < 1 || wmax > W || hmax < 1 || hmax > 1000000000) {
+    ll hmax = argc == 6 ? atoll(argv[5]) : DEFAULT_HMAX;
+    if (n < 1 || n > MAX_N || wmax < 1 || wmax > W || hmax < 1 || hmax > MAX_SIDE) {
         cerr << "need 1 <= n <= 10^6, 1 <= wmax <= 1000 and 1 <= hmax <= 10^9\n";
         return 1;
     }
@@ -82,7 +86,7 @@ int main(int argc, char **argv) {
             ll w = uniform(rng, 1, wmax);
             ll h = hmax;
             if (type == "uniform") h = uniform(rng, 1, hmax);
-            if (type == "heavy") h = max(1LL, hmax / uniform(rng, 1, 100));
+            if (type == "heavy") h = max(1LL, hmax / uniform(rng, 1, HEAVY_K));
             rects.push_back({w, h});
         }
     } else {

@@ -80,15 +80,18 @@ def py_levels(W, rects, choose):
 
 
 def first_fit(W, used, w):
+    """The lowest level with enough room, or None."""
     return next((k for k, u in enumerate(used) if W - u >= w), None)
 
 
 def best_fit(W, used, w):
+    """The level with the least free width that is still enough (lowest on ties), or None."""
     fits = [(W - u, k) for k, u in enumerate(used) if W - u >= w]
     return min(fits)[1] if fits else None
 
 
 def next_fit(W, used, w):
+    """The newest level if the texture fits there, or None."""
     return len(used) - 1 if used and W - used[-1] >= w else None
 
 
@@ -194,6 +197,7 @@ def random_small(binary, count, rng):
 
 
 def parse(text):
+    """Read W and the (w, h) list from an input file's text."""
     lines = text.split('\n')
     W = int(lines[0].split()[1])
     return W, [tuple(map(int, line.split())) for line in lines[1:] if line]
@@ -236,12 +240,14 @@ class MT64:
     """The mt19937_64 engine, written from the C++ standard, to check that gen.cpp is portable."""
 
     def __init__(self, seed):
+        """Seed the state the same way as the C++ engine."""
         self.mt = [seed & MASK] + [0] * 311
         for i in range(1, 312):
             self.mt[i] = (6364136223846793005 * (self.mt[i - 1] ^ (self.mt[i - 1] >> 62)) + i) & MASK
         self.i = 312
 
     def __call__(self):
+        """Return the next 64-bit number."""
         if self.i >= 312:
             for k in range(312):
                 y = (self.mt[k] & 0xFFFFFFFF80000000) | (self.mt[(k + 1) % 312] & 0x7FFFFFFF)
@@ -260,6 +266,7 @@ def python_gen(n, kind, seed, wmax=1000, hmax=1000):
     rng = MT64(seed)
 
     def uniform(lo, hi):
+        """Same as uniform() in gen.cpp."""
         size = hi - lo + 1
         limit = MASK - MASK % size
         x = rng()
@@ -324,6 +331,7 @@ def bad_inputs(binary):
 
 
 def main():
+    """Run all test groups and print one line per group."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--binary', type=Path, default=ROOT / 'build/pack')
     parser.add_argument('--gen', type=Path, default=ROOT / 'build/gen')

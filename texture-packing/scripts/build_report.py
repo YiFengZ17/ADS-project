@@ -75,7 +75,7 @@ def convert(markdown):
                 level = int(t.tag[1:])
                 command = {1: 'section', 2: 'subsection', 3: 'subsubsection'}.get(level, 'paragraph')
                 # Keep a heading with its first lines; tables reserve their own space.
-                reserve = {'Correctness Tests': 20, 'Timing Results': 8, 'Limitations and Improvements': 12}.get(title, 5)
+                reserve = {'Correctness Tests': 20, 'Timing Results': 8, 'Limitations and Improvements': 12, 'Packing Quality': 30}.get(title, 5)
                 body.append(r'\Needspace{' + str(reserve) + r'\baselineskip}' + chr(92) + command + '{')
         elif typ == 'heading_close':
             # Cover title and abstract are centered and unnumbered.
@@ -89,6 +89,11 @@ def convert(markdown):
             content = tokens[i+1].content if i+1 < len(tokens) else ''
             cover_metadata = before_body and content.startswith(('Author:', 'Group number:', 'Date:'))
             if cover_metadata: body.append(r'\begin{center}{\titlefont ')
+            # keep a "**Table N.**" caption on the same page as the table after it
+            if re.match(r'\*\*Table \d+\.\*\*', content):
+                rows_after = sum(1 for k in range(i, len(tokens)) if tokens[k].type == 'tr_open'
+                                 and all(tokens[j].type != 'table_close' for j in range(i, k)))
+                body.append(r'\Needspace{' + str(min(34, 1.5 * rows_after + 6)) + r'\baselineskip}')
 
         elif typ == 'paragraph_close':
             if not table:
