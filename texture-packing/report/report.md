@@ -229,7 +229,7 @@ We implemented FFDH for texture packing. With a tree over the free widths of the
 
 [1] E. G. Coffman Jr., M. R. Garey, D. S. Johnson, and R. E. Tarjan, "Performance bounds for level-oriented two-dimensional packing algorithms," *SIAM Journal on Computing*, vol. 9, no. 4, pp. 808–826, 1980, doi: [10.1137/0209062](https://doi.org/10.1137/0209062).
 
-[2] D. D. K. D. B. Sleator, "A 2.5 times optimal algorithm for packing in two dimensions," *Information Processing Letters*, vol. 10, no. 1, pp. 37–40, 1980, doi: [10.1016/0020-0190(80)90121-0](https://doi.org/10.1016/0020-0190(80)90121-0).
+[2] D. Sleator, "A 2.5 times optimal algorithm for packing in two dimensions," *Information Processing Letters*, vol. 10, no. 1, pp. 37–40, 1980, doi: [10.1016/0020-0190(80)90121-0](https://doi.org/10.1016/0020-0190(80)90121-0).
 
 [3] T. H. Cormen, C. E. Leiserson, R. L. Rivest, and C. Stein, *Introduction to Algorithms*, 4th ed. Cambridge, MA, USA: MIT Press, 2022, chs. 2 and 13. [Publisher](https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/).
 
