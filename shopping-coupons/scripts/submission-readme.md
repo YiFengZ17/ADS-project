@@ -52,4 +52,4 @@ Both lines should report `1000000 0` (items and money left). The report's experi
 
 ## Full checks
 
-The comparison with all subsets, the Python sort and the scripts that run the experiments and draw the figures are kept in the authors' working directory and are not part of this bundle. There, the full suite checks 1,639 cases in a release build and 354 cases in an ASan/UBSan build.
+The comparison with all subsets, the Python sort and the scripts that run the experiments and draw the figures are kept in the authors' working directory and are not part of this bundle. There, the full suite checks 1,640 cases in a release build and 355 cases in an ASan/UBSan build.

@@ -67,6 +67,7 @@ def hand_made(binary):
         ('one dollar, cheapest cost 2', 1, [3, 9], [1, 1], (0, 1)),
         ('values near 10^9', 10 ** 6, [big, big], [big - 1, 1], (2, 999998)),
         ('same cost from different pairs', 8, [5, 6], [3, 2], (3, 0)),
+        ('example in Chapter 1 of the report', 100, [10, 11], [4, 3], (4, 72)),
     ]
     for label, d, prices, coupons, answer in cases:
         assert sorted_oracle(d, prices, coupons) == answer, label

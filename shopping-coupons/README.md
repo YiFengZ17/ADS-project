@@ -31,7 +31,7 @@ make benchmark
 python3 scripts/benchmark.py --plot-only
 ```
 
-`make` 输出 `build/coupons` 和 `build/gen`。样例应输出 `8 2`。`check` 在终端报告 7 组共 1,639 个用例；`sanitize` 输出 `build/coupons-san`（ASan/UBSan），并运行其中 354 个较小用例。
+`make` 输出 `build/coupons` 和 `build/gen`。样例应输出 `8 2`。`check` 在终端报告 7 组共 1,640 个用例；`sanitize` 输出 `build/coupons-san`（ASan/UBSan），并运行其中 355 个较小用例。
 
 `benchmark` 是报告计时表和图的来源：`size`（固定 D = 10^6，N 从 250 到 10^5）和 `money`（固定 N = 10^5，D 从 10^3 到 10^7）两组实验，每组三类数据 × 3 个种子，每个输入预热 1 次、正式运行 10 次取中位数；暴力法只测到 N = 4000。输入文件缓存在 `data/instances/`，结果写入 `data/<实验名>.json`，图写入 `figures/<实验名>.png/.pdf`，终端同时打印报告用的表格数据。全部实验约需 2 分钟。`--plot-only` 只从已有 JSON 重画图和表。新运行不会改写报告中的数值。
 

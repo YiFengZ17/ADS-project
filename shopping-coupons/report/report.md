@@ -15,9 +15,9 @@ We have $N$ items, $N$ kinds of coupons and $D$ dollars, and we want to buy as m
 
 In this problem there are $N$ items on a shopping list and $N$ kinds of coupons, and we have $D$ dollars. We can buy an item many times and use a coupon many times, but one coupon can be used on one item only once. We want to buy as many items as possible. If there are several ways to do that, we want the one with the most money left.
 
-Let us look at the example in the problem. There are 4 items with prices 10, 12, 15 and 20, and 4 coupons with values 6, 7, 8 and 9, and we have 30 dollars. The cheapest thing we can do is to buy the 10-dollar item with the 9-dollar coupon, which costs only 1 dollar. We can buy the 10-dollar item again with the coupons 8, 7 and 6, which costs 2, 3 and 4 dollars. Then we buy the 12-dollar item with the coupons 9, 8 and 7 for 3, 4 and 5 dollars, and the 15-dollar item with the coupon 9 for 6 dollars. In total we pay 28 dollars for 8 items and have 2 dollars left, which is not enough for anything else.
+Here is a small example of our own. Say there are 2 items that cost 10 and 11 dollars, and 2 coupons worth 4 and 3 dollars. We can buy the 10-dollar item with the 4-dollar coupon for 6 dollars, and then buy it again with the 3-dollar coupon for 7 dollars. The 11-dollar item can also be bought twice, for 7 and 8 dollars. But after that we can not use the 4-dollar coupon on the 10-dollar item again. So even if we have 100 dollars, we can only make these 4 purchases, and 72 dollars are left. In the sample of the problem (prices 10, 12, 15, 20, coupons 6, 7, 8, 9 and 30 dollars), the best plan buys 8 items and keeps 2 dollars; Chapter 2 shows how our methods find it.
 
-From this example we can see what the problem is really about. Every pair of one item and one coupon is a possible purchase, its cost is the price minus the coupon, and each pair can be used only once. We just need to pick the cheapest pairs. The problem promises that the largest coupon is smaller than the lowest price, so every pair costs at least 1 dollar.
+From these examples we can see what the problem is really about. Every pair of one item and one coupon is a possible purchase, its cost is the price minus the coupon, and each pair can be used only once. We just need to pick the cheapest pairs. The problem promises that the largest coupon is smaller than the lowest price, so every pair costs at least 1 dollar.
 
 The input has $N$ ($\leq10^5$) and $D$ ($\leq10^6$) on the first line, then the $N$ prices, then the $N$ coupon values. We print the number of items and the money left.
 
@@ -29,15 +29,23 @@ The hard part is that there are too many pairs. When $N=10^5$ there are $10^{10}
 
 All our methods use the same rule: buy the cheapest pair that is not used yet, and stop when we can not pay for it. This works because buying one pair does not change the cost of any other pair, so there is no reason to skip a cheap pair and take an expensive one. The three methods below only differ in how they find the cheapest pair.
 
+## Data Structures
+
+Our methods use only a few simple data structures:
+
+1. **Two sorted arrays.** We sort the prices from low to high and the coupons from high to low. After this, for one item the pairs get more expensive as we go to the next coupon, and for one coupon the pairs get more expensive as we go to the next item.
+2. **A min-heap of pairs.** Each element of the heap is one pair, stored as its cost, the index of the item and the index of the coupon. The heap is ordered by cost, so the cheapest pair is always on top. Taking the top out (pop) and putting a new pair in (push) both cost $O(\log n)$ for a heap of $n$ elements [1]. We use the `priority_queue` of the C++ standard library. The heap keeps at most one pair for each item, so it never has more than $N$ elements.
+3. **A prefix sum array of coupons.** `prefix[k]` is the sum of the $k$ largest coupons. With it, the total cost of buying one item with its $k$ largest coupons is $k\cdot p-$`prefix[k]`, which we can get in $O(1)$ time. Only the binary search method uses it.
+
 ## Brute Force
 
 The most direct way is to compute the cost of all $N^2$ pairs, sort them, and buy from the cheapest one until the money runs out. It is simple and hard to get wrong, so we use it to check the other methods. But it needs $N^2$ numbers in memory, so we only allow it when $N\leq5000$.
 
 ## Heap Method
 
-To avoid looking at all pairs, we first sort the prices from low to high and the coupons from high to low. Now for one item, its cheapest pair uses the largest coupon, its second cheapest pair uses the second largest coupon, and so on. So each item has a list of pairs that go from cheap to expensive, and we only need to look at the first unused pair of each item. Also, a more expensive item can not have the cheapest pair before the cheaper item has used its largest coupon, so we do not need to look at all items from the start.
+To avoid looking at all pairs, we use the two sorted arrays. For one item, its cheapest pair uses the largest coupon, its second cheapest pair uses the second largest coupon, and so on. So each item has a list of pairs that go from cheap to expensive, and we only need to look at the first unused pair of each item. Also, a more expensive item can not have the cheapest pair before the cheaper item has used its largest coupon, so we do not need to look at all items from the start.
 
-We keep the first unused pair of each item in a min-heap, because a min-heap can give us the smallest element quickly [1]. The steps are:
+We keep the first unused pair of each item in the min-heap. The steps are:
 
 1. **Start.** Put the pair (cheapest item, largest coupon) into the heap.
 2. **Buy.** Take the cheapest pair out of the heap. If we can not pay for it, stop. Otherwise pay and count one more item.
@@ -51,7 +59,7 @@ The heap method takes one pair at a time. If every pair is very cheap, it has to
 
 The idea is to guess a cost $t$ and ask: if we buy every pair that costs at most $t$, how much do we pay? If this is not more than $D$, then $t$ can be larger; if it is more than $D$, then $t$ is too large. So we can find the best $t$ by binary search.
 
-1. **Count for one $t$.** For an item with price $p$, the pairs that cost at most $t$ are the ones with a coupon of at least $p-t$. The coupons are sorted, so these are the first $k$ coupons. We get their total cost from $k$, $p$ and a prefix sum of the coupons. For the next item the price is higher, so $k$ can only become smaller. This means we just move one pointer backwards and finish all items in one pass.
+1. **Count for one $t$.** For an item with price $p$, the pairs that cost at most $t$ are the ones with a coupon of at least $p-t$. The coupons are sorted, so these are the first $k$ coupons. We get their total cost from $k$, $p$ and the prefix sum array. For the next item the price is higher, so $k$ can only become smaller. This means we just move one pointer backwards and finish all items in one pass.
 2. **Binary search.** Find the largest $t$ for which the total is at most $D$.
 3. **Use the rest.** After buying all pairs up to $t$, there is usually some money left. We use it to buy pairs that cost $t+1$, as many as we can.
 
@@ -77,7 +85,7 @@ Our program can run any of the three methods on the same input, and they must pr
 
 | Test group (count) | Result | Purpose |
 | --- | --- | --- |
-| Hand-made cases (12) | PASS | The sample, and small cases we solved by hand: only one pair, not enough money for anything, exactly enough money for all pairs, one dollar short, all costs equal, $D=1$, and values near $10^9$. |
+| Hand-made cases (13) | PASS | The sample, our example from Chapter 1, and small cases we solved by hand: only one pair, not enough money for anything, exactly enough money for all pairs, one dollar short, all costs equal, $D=1$, and values near $10^9$. |
 | Tiny inputs (500) | PASS | $N\leq3$, compared with trying all subsets. This tests if the greedy idea itself is right. |
 | Random small inputs (1,000) | PASS | $N\leq40$, compared with the Python sort. Some have many equal costs, some have very large values. |
 | Generated inputs (96) | PASS | Our four data types with $N$ from 1 to 300 and $D$ from 1 to $10^6$, compared with the Python sort. |
@@ -85,7 +93,18 @@ Our program can run any of the three methods on the same input, and they must pr
 | Bad inputs (4) | PASS | Empty or broken input must give an error message, not a wrong answer. |
 | Generator check (16) | PASS | The generator must give the same data on every compiler. We compare it with a Python version. |
 
-All 1,639 cases pass. With the sanitizers we run a smaller set of 354 cases and there is no error.
+All 1,640 cases pass. With the sanitizers we run a smaller set of 355 cases and there is no error.
+
+The table below lists some of the hand-made cases with their input, the answer we worked out by hand and the output of our program. All three methods print the same output.
+
+| Case | Input ($N$ $D$ / prices / coupons) | Expected | Output |
+| --- | --- | --- | --- |
+| Sample of the problem | 4 30 / 12 20 15 10 / 9 6 8 7 | 8 2 | 8 2 |
+| Our example in Chapter 1 | 2 100 / 10 11 / 4 3 | 4 72 | 4 72 |
+| A pair can be used only once | 1 100 / 10 / 4 | 1 94 | 1 94 |
+| Money is exactly enough for all pairs | 2 18 / 5 7 / 1 2 | 4 0 | 4 0 |
+| One dollar short of all pairs | 2 17 / 5 7 / 1 2 | 3 5 | 3 5 |
+| Can not buy anything | 1 5 / 10 / 4 | 0 5 | 0 5 |
 
 ## Test Data
 
